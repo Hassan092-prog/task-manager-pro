@@ -3,5 +3,5 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  // Remove the proxy for production
+  // Remove the server: { proxy: ... } section
 })
