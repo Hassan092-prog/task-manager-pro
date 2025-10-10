@@ -25,7 +25,21 @@ def create_app():
         db.create_all()
     
     return app
-
+    @app.route('/')
+    def home():
+        return '''
+        <h1>Task Manager API</h1>
+        <p>Backend is running successfully!</p>
+        <p>Available endpoints:</p>
+        <ul>
+            <li>POST /api/auth/register - Register user</li>
+            <li>POST /api/auth/login - Login user</li>
+            <li>GET /api/auth/protected - Protected route</li>
+            <li>GET /api/tasks - Get tasks</li>
+            <li>POST /api/tasks - Create task</li>
+        </ul>
+        <p>Use Thunder Client or Postman to test the API endpoints.</p>
+        '''
 if __name__ == '__main__':
     app = create_app()
     app.run(debug=True, port=5000)
