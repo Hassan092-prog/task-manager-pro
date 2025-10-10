@@ -4,7 +4,7 @@ A full-stack task management application built with React + Flask.
 
 ## Live Demo
 - **Frontend:** https://task-manager-frontend-lake-seven.vercel.app
-- **Backend API:** https://task-manager-backend.onrender.com
+- **Backend API:** https://task-manager-backend-767m.onrender.com/
 
 ## Features
 - User authentication (Register/Login)
