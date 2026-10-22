@@ -1,17 +1,122 @@
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   line-height: 1.5;
   font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Strict Spacing Grid (4px/8px multiples) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Restrained Radii (No hyper-rounded bubbly pills) */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* Purposeful, Instant Transitions */
+  --transition-fast: 120ms ease;
+  --transition-normal: 200ms ease;
+
+  /* Restrained Priority Markers */
+  --prio-urgent: #ef4444;
+  --prio-high: #f59e0b;
+  --prio-medium: #3b82f6;
+  --prio-low: #71717a;
+}
+
+/* Dark Theme (Minimalist Obsidian / Zinc) */
+:root, [data-theme="dark"] {
+  --bg-app: #09090b;
+  --bg-sidebar: #101014;
+  --bg-surface: #18181b;
+  --bg-surface-hover: #222226;
+  --bg-input: #121215;
+
+  --border-subtle: #27272a;
+  --border-medium: #3f3f46;
+  --border-focus: #a1a1aa;
+
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+
+  --accent-solid: #f4f4f5;
+  --accent-text: #09090b;
+  --accent-subtle: #27272a;
+
+  --shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-overlay: 0 12px 32px -4px rgba(0, 0, 0, 0.7);
+}
+
+/* Light Theme (Swiss Studio / Crisp Slate) */
+[data-theme="light"] {
+  --bg-app: #fcfcfc;
+  --bg-sidebar: #f4f4f5;
+  --bg-surface: #ffffff;
+  --bg-surface-hover: #f8f8f9;
+  --bg-input: #ffffff;
+
+  --border-subtle: #e4e4e7;
+  --border-medium: #d4d4d8;
+  --border-focus: #71717a;
+
+  --text-primary: #09090b;
+  --text-secondary: #52525b;
+  --text-muted: #a1a1aa;
+
+  --accent-solid: #09090b;
+  --accent-text: #ffffff;
+  --accent-subtle: #f4f4f5;
+
+  --shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-overlay: 0 12px 32px -4px rgba(0, 0, 0, 0.12);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  min-height: 100vh;
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  font-family: inherit;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
 }
 
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
+  display: block;
   min-width: 320px;
-  min-height: 100vh;
 }
 
 #root {
-  width: 100%;
+  min-height: 100vh;
+}
+
+/* Focus States */
+:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-medium);
+  border-radius: var(--radius-xs);
 }

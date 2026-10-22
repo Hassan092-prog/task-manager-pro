@@ -1,8 +1,8 @@
 import api from './api';
 
 export const taskService = {
-  getTasks: async () => {
-    const response = await api.get('/tasks');
+  getTasks: async (params = {}) => {
+    const response = await api.get('/tasks', { params });
     return response.data;
   },
 

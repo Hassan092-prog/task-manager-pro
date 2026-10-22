@@ -26,48 +26,67 @@ const Login = ({ onLogin, switchToRegister }) => {
       localStorage.setItem('access_token', result.access_token);
       localStorage.setItem('user', JSON.stringify(result.user));
       onLogin(result.user);
-    } catch (error) {
-      setError(error.response?.data?.error || 'Login failed');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Invalid credentials.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="auth-form">
-      <h2>Login</h2>
-      {error && <div className="error">{error}</div>}
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Email:</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
+    <div className="auth-container">
+      <div className="auth-box">
+        <div className="auth-box-header">
+          <h1>Sign in</h1>
+          <p>Task Manager Pro workspace</p>
         </div>
-        <div className="form-group">
-          <label>Password:</label>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <button type="submit" disabled={loading}>
-          {loading ? 'Logging in...' : 'Login'}
-        </button>
-      </form>
-      <p>
-        Don't have an account? 
-        <button onClick={switchToRegister} className="link-button">
-          Register here
-        </button>
-      </p>
+
+        {error && (
+          <div className="auth-error-banner">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <div className="auth-field">
+            <label>Email</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="name@domain.com"
+              className="auth-input"
+              required
+              autoFocus
+            />
+          </div>
+
+          <div className="auth-field">
+            <label>Password</label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="••••••••••••"
+              className="auth-input"
+              required
+            />
+          </div>
+
+          <button type="submit" disabled={loading} className="auth-submit-btn">
+            {loading ? 'Signing in...' : 'Sign in'}
+          </button>
+        </form>
+
+        <p className="auth-switch-text">
+          No account yet?
+          <button type="button" onClick={switchToRegister} className="auth-switch-btn">
+            Register
+          </button>
+        </p>
+      </div>
     </div>
   );
 };

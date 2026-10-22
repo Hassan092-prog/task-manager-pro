@@ -11,7 +11,11 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is already logged in
+    // Sync theme on initial boot
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    // Check if user session is active
     const currentUser = authService.getCurrentUser();
     if (currentUser && authService.isAuthenticated()) {
       setUser(currentUser);
@@ -34,29 +38,31 @@ function App() {
   };
 
   if (loading) {
-    return <div className="App">Loading...</div>;
+    return (
+      <div className="auth-container">
+        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Loading workspace...</span>
+      </div>
+    );
   }
 
   return (
-    <div className="App">
+    <>
       {!user ? (
-        <div className="auth-container">
-          {currentView === 'login' ? (
-            <Login 
-              onLogin={handleLogin} 
-              switchToRegister={() => setCurrentView('register')} 
-            />
-          ) : (
-            <Register 
-              onRegister={handleRegister} 
-              switchToLogin={() => setCurrentView('login')} 
-            />
-          )}
-        </div>
+        currentView === 'login' ? (
+          <Login 
+            onLogin={handleLogin} 
+            switchToRegister={() => setCurrentView('register')} 
+          />
+        ) : (
+          <Register 
+            onRegister={handleRegister} 
+            switchToLogin={() => setCurrentView('login')} 
+          />
+        )
       ) : (
         <Dashboard onLogout={handleLogout} />
       )}
-    </div>
+    </>
   );
 }
 
