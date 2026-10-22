@@ -134,13 +134,23 @@ erDiagram
 
 ---
 
-## 5. Deployment Topology
+## 5. Deployment Topology & Container Architecture
 
-| Component | Platform | Configuration |
-| :--- | :--- | :--- |
-| **Frontend** | [Vercel](https://task-manager-frontend-lake-seven.vercel.app) | Vite SPA build output (`dist/`), rewrite rules for SPA navigation. |
-| **Backend** | [Render](https://task-manager-backend-767m.onrender.com) | Python Web Service running `gunicorn wsgi:app` with environment variables. |
-| **Database** | Render Managed PostgreSQL / SQLite | SQLite for local development (`taskmanager.db`), PostgreSQL in production. |
+Task Manager Pro supports both serverless cloud hosting and fully containerized Docker deployments:
+
+### 5.1 Docker Container Network
+```mermaid
+graph LR
+    Client["Browser Client (:5173)"] -->|HTTP / SPA| Frontend["Frontend Container (Nginx:80)"]
+    Frontend -->|Proxy /api/| Backend["Backend Container (Gunicorn:5001)"]
+    Backend -->|Persistent Volume| SQLite[("SQLite Volume (/app/instance)")]
+    Backend -.->|Optional Profile| Postgres[("PostgreSQL Container (:5432)")]
+```
+
+| Deployment Mode | Frontend | Backend | Persistence |
+| :--- | :--- | :--- | :--- |
+| **Docker Compose** | Nginx Alpine (Reverse Proxy + Static Assets) on `:5173` | Gunicorn (Python 3.11 Slim) on `:5001` | SQLite Docker Volume (`taskmanager-sqlite-data`) or PostgreSQL |
+| **Cloud Hosting** | Vercel Edge SPA | Render Web Service | Render Managed PostgreSQL / SQLite |
 
 ---
 

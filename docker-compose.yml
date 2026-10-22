@@ -1,0 +1,59 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: taskmanager-backend
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    env_file:
+      - .env
+    environment:
+      - PORT=5001
+      - SECRET_KEY=${SECRET_KEY:-76187db6ce0ff5953445de06323c3e2715a1e9ceb60d8eac7488e8a93af3e79e}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-8f3be95f07b41093e8f4b4fd9a84b8a38cac70e2cc945349aa32f9bc32d8907d}
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///taskmanager.db}
+    volumes:
+      - ./backend/instance:/app/instance
+    networks:
+      - taskmanager-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=/api
+    container_name: taskmanager-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    networks:
+      - taskmanager-net
+
+  # Optional PostgreSQL service (activated with: docker compose --profile postgres up -d)
+  db:
+    image: postgres:16-alpine
+    container_name: taskmanager-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-taskuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-taskpass}
+      POSTGRES_DB: ${POSTGRES_DB:-taskmanager}
+    volumes:
+      - taskmanager-postgres-data:/var/lib/postgresql/data
+    networks:
+      - taskmanager-net
+    profiles:
+      - postgres
+
+networks:
+  taskmanager-net:
+    driver: bridge
+
+volumes:
+  taskmanager-postgres-data:
+    driver: local

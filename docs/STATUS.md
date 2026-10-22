@@ -29,6 +29,8 @@ The backend API has been enhanced with model extensions (`priority`, `category`)
 | **Mobile Ergonomics** | `frontend/src/components/Dashboard.jsx` | Form was rigid on small screens. | Added mobile Floating Action Button (FAB) and scrollable filter chips. |
 | **Productivity Bar** | `frontend/src/components/Dashboard.jsx` | Only basic text numbers. | Added velocity progress bar, overdue indicators, and motivational stats. |
 | **Keyboard Ergonomics** | `frontend/src/components/Dashboard.jsx` | Mouse-only navigation. | Added `N` for new task, `/` or `Ctrl+K` for instant search, and `Esc` to close modals. |
+| **Docker Orchestration** | `docker-compose.yml`, Dockerfiles | Required manual Python/Node setup on host machine. | Full multi-stage Dockerfiles + Nginx reverse proxy + Gunicorn with SQLite persistent volume and optional PostgreSQL profile. |
+| **Session Invalidation Interceptor** | `frontend/src/services/api.js`, `Dashboard.jsx`, `docker-compose.yml` | JWT secret mismatch between host and Docker container caused HTTP 422 ("Signature verification failed") resulting in persistent "Failed to load tasks" error without logging out. | Aligned container secrets with `.env`, bind-mounted SQLite db (`./backend/instance:/app/instance`), and implemented Axios response interceptor for 401/422 to automatically clear stale credentials and re-authenticate. |
 
 ---
 

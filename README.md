@@ -47,9 +47,33 @@ Detailed technical documentation is available in the [`docs/`](./docs) folder:
 | **Database** | SQLite (Local Development) / PostgreSQL (Production) |
 | **Hosting & CI/CD** | Vercel (Frontend SPA) + Render (Backend Web Service) |
 
+## 🐳 Docker Setup (Recommended)
+
+Run the entire full-stack application (Frontend + Backend + Database) with a single command:
+
+```bash
+# Start Frontend, Backend & SQLite persistence
+docker compose up -d --build
+
+# View container logs
+docker compose logs -f
+
+# Stop all services
+docker compose down
+```
+
+- **Frontend Application:** Open [http://localhost:5173](http://localhost:5173) (or `http://<server-ip>:5173`)
+- **Backend API & Status Dashboard:** Open [http://localhost:5001](http://localhost:5001)
+
+#### Optional PostgreSQL Database Mode
+If you prefer PostgreSQL over SQLite:
+```bash
+docker compose --profile postgres up -d --build
+```
+
 ---
 
-## 💻 Local Development Setup
+## 💻 Manual Development Setup (Without Docker)
 
 ### 1. Prerequisites
 - Node.js (v18+) & npm

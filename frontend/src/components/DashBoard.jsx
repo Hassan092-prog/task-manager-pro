@@ -88,7 +88,7 @@ const Dashboard = ({ onLogout }) => {
       const tasksData = await taskService.getTasks();
       setTasks(tasksData);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to load tasks.');
+      setError(err.response?.data?.error || err.response?.data?.msg || 'Failed to load tasks.');
     } finally {
       setLoading(false);
     }
@@ -112,7 +112,7 @@ const Dashboard = ({ onLogout }) => {
       setNewTitle('');
       setNewDueDate('');
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to create task');
+      setError(err.response?.data?.error || err.response?.data?.msg || 'Failed to create task');
     } finally {
       setIsCreating(false);
     }
@@ -124,7 +124,7 @@ const Dashboard = ({ onLogout }) => {
       const result = await taskService.updateTask(taskId, updateData);
       setTasks(prev => prev.map(t => t.id === taskId ? result.task : t));
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to update task');
+      setError(err.response?.data?.error || err.response?.data?.msg || 'Failed to update task');
       fetchTasks();
     }
   };
@@ -134,7 +134,7 @@ const Dashboard = ({ onLogout }) => {
       setTasks(prev => prev.filter(t => t.id !== taskId));
       await taskService.deleteTask(taskId);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to delete task');
+      setError(err.response?.data?.error || err.response?.data?.msg || 'Failed to delete task');
       fetchTasks();
     }
   };
