@@ -106,7 +106,7 @@ const TaskItem = ({ task, onUpdate, onDelete }) => {
             <button
               type="button"
               onClick={() => setIsEditing(true)}
-              className="btn-icon-subtle"
+              className="btn-icon-subtle btn-action-edit"
               title="Edit task"
               aria-label="Edit task"
             >
@@ -115,7 +115,7 @@ const TaskItem = ({ task, onUpdate, onDelete }) => {
             <button
               type="button"
               onClick={() => onDelete(task.id)}
-              className="btn-icon-subtle"
+              className="btn-icon-subtle btn-action-delete"
               title="Delete task"
               aria-label="Delete task"
             >

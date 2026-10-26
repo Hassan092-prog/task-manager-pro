@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { taskService } from '../services/tasks';
 import { authService } from '../services/auth';
 import TaskList from './TaskList';
+import DailyCompanion from './DailyCompanion';
 import { 
   IconInbox, 
   IconCalendar, 
@@ -16,7 +17,11 @@ import {
   IconMenu, 
   IconX,
   IconLayoutList,
-  IconLayoutGrid
+  IconLayoutGrid,
+  IconPanelRight,
+  IconFilter,
+  IconDownload,
+  IconTrash
 } from './Icons';
 
 const Dashboard = ({ onLogout }) => {
@@ -29,6 +34,20 @@ const Dashboard = ({ onLogout }) => {
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'board'
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Daily Companion Panel & Filtering State (default open on >= 1140px, off-canvas on mobile/tablet)
+  const [isCompanionVisible, setIsCompanionVisible] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 1140;
+    }
+    return true;
+  });
+  const [selectedDateFilter, setSelectedDateFilter] = useState(null);
+  const [activeFilterPill, setActiveFilterPill] = useState('all');
+
+  // Lightweight Avatar Profile Popover State
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const profilePopoverRef = useRef(null);
 
   // Quick Task Creation Inline State
   const [newTitle, setNewTitle] = useState('');
@@ -58,9 +77,31 @@ const Dashboard = ({ onLogout }) => {
     fetchTasks();
   }, []);
 
+  // Close popover on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (
+        profilePopoverRef.current && 
+        !profilePopoverRef.current.contains(e.target) && 
+        !e.target.closest('.user-profile-trigger')
+      ) {
+        setIsProfileOpen(false);
+      }
+    };
+
+    if (isProfileOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isProfileOpen]);
+
   // Global Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setIsProfileOpen(false);
+      }
+
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
         if (e.key === 'Escape') {
           e.target.blur();
@@ -139,6 +180,60 @@ const Dashboard = ({ onLogout }) => {
     }
   };
 
+  // Date Preset Helpers for Quick-Add
+  const setDueDateToday = () => {
+    const d = new Date();
+    d.setHours(18, 0, 0, 0);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    setNewDueDate(`${year}-${month}-${day}T18:00`);
+  };
+
+  const setDueDateTomorrow = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    d.setHours(18, 0, 0, 0);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    setNewDueDate(`${year}-${month}-${day}T18:00`);
+  };
+
+  // Profile Popover Utility Handlers
+  const handleExportTasks = () => {
+    const exportData = {
+      exported_at: new Date().toISOString(),
+      user: user?.username,
+      total_tasks: tasks.length,
+      tasks: tasks
+    };
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `taskmanager-pro-backup-${new Date().toISOString().slice(0, 10)}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+    setIsProfileOpen(false);
+  };
+
+  const handleClearCompleted = async () => {
+    const completedTasks = tasks.filter(t => t.completed);
+    if (completedTasks.length === 0) return;
+    if (window.confirm(`Permanently remove ${completedTasks.length} completed task${completedTasks.length === 1 ? '' : 's'}?`)) {
+      try {
+        for (const t of completedTasks) {
+          await taskService.deleteTask(t.id);
+        }
+        setTasks(prev => prev.filter(t => !t.completed));
+        setIsProfileOpen(false);
+      } catch (err) {
+        setError(err.response?.data?.error || err.response?.data?.msg || 'Failed to clear completed tasks');
+      }
+    }
+  };
+
   // Compute Task Counts for Sidebar Nav
   const counts = useMemo(() => {
     const now = new Date();
@@ -168,7 +263,7 @@ const Dashboard = ({ onLogout }) => {
     return { inbox: inboxCount, today: todayCount, upcoming: upcomingCount, completed: completedCount };
   }, [tasks]);
 
-  // Filter Tasks based on Active Nav & Search
+  // Filter Tasks based on Active Nav, Date Filter, Filter Pill, & Search
   const filteredTasks = useMemo(() => {
     const now = new Date();
     const todayStr = now.toDateString();
@@ -184,28 +279,43 @@ const Dashboard = ({ onLogout }) => {
 
       // Nav View
       if (activeNav === 'inbox') {
-        return !task.completed;
-      }
-      if (activeNav === 'today') {
+        if (task.completed) return false;
+      } else if (activeNav === 'today') {
         if (task.completed || !task.due_date) return false;
-        return new Date(task.due_date).toDateString() === todayStr;
-      }
-      if (activeNav === 'upcoming') {
+        if (new Date(task.due_date).toDateString() !== todayStr) return false;
+      } else if (activeNav === 'upcoming') {
         if (task.completed || !task.due_date) return false;
-        return new Date(task.due_date) > now && new Date(task.due_date).toDateString() !== todayStr;
-      }
-      if (activeNav === 'completed') {
-        return task.completed;
-      }
-      // If activeNav is a specific category tag
-      if (activeNav.startsWith('tag:')) {
+        if (new Date(task.due_date) <= now || new Date(task.due_date).toDateString() === todayStr) return false;
+      } else if (activeNav === 'completed') {
+        if (!task.completed) return false;
+      } else if (activeNav.startsWith('tag:')) {
         const tagName = activeNav.replace('tag:', '');
-        return !task.completed && (task.category || 'General').toLowerCase() === tagName.toLowerCase();
+        if (task.completed || (task.category || 'General').toLowerCase() !== tagName.toLowerCase()) return false;
+      }
+
+      // Date Filter from Companion Week Strip
+      if (selectedDateFilter) {
+        if (!task.due_date || !task.due_date.startsWith(selectedDateFilter)) {
+          return false;
+        }
+      }
+
+      // Filter Pill
+      if (activeFilterPill !== 'all') {
+        if (activeFilterPill === 'urgent') {
+          if (task.priority !== 'urgent') return false;
+        } else if (activeFilterPill === 'high') {
+          if (task.priority !== 'high') return false;
+        } else {
+          if ((task.category || '').toLowerCase() !== activeFilterPill.toLowerCase()) {
+            return false;
+          }
+        }
       }
 
       return true;
     });
-  }, [tasks, activeNav, searchQuery]);
+  }, [tasks, activeNav, searchQuery, selectedDateFilter, activeFilterPill]);
 
   const user = authService.getCurrentUser();
   const userInitials = (user?.username || 'U').substring(0, 2).toUpperCase();
@@ -218,6 +328,25 @@ const Dashboard = ({ onLogout }) => {
     if (activeNav === 'completed') return 'Completed';
     if (activeNav.startsWith('tag:')) return `# ${activeNav.replace('tag:', '')}`;
     return 'Tasks';
+  };
+
+  // Subtitle Context Info
+  const getSubTitle = () => {
+    const today = new Date().toLocaleDateString(undefined, { 
+      weekday: 'long', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+    if (selectedDateFilter) {
+      const parts = selectedDateFilter.split('-');
+      const d = new Date(parts[0], parts[1] - 1, parts[2]);
+      return `Filtered for ${d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}`;
+    }
+    if (activeNav === 'today') return `${today} • ${filteredTasks.length} task${filteredTasks.length === 1 ? '' : 's'} due today`;
+    if (activeNav === 'completed') return `${filteredTasks.length} completed task${filteredTasks.length === 1 ? '' : 's'}`;
+    if (activeNav === 'upcoming') return `${filteredTasks.length} scheduled task${filteredTasks.length === 1 ? '' : 's'}`;
+    if (counts.inbox === 0) return `${today} • All caught up`;
+    return `${today} • ${counts.inbox} active task${counts.inbox === 1 ? '' : 's'}`;
   };
 
   return (
@@ -324,10 +453,16 @@ const Dashboard = ({ onLogout }) => {
         </div>
 
         <div className="sidebar-footer">
-          <div className="user-snippet">
+          <button
+            type="button"
+            className="user-profile-trigger"
+            onClick={() => setIsProfileOpen(!isProfileOpen)}
+            title="User Profile & Utilities"
+            aria-expanded={isProfileOpen}
+          >
             <div className="user-avatar-sm">{userInitials}</div>
-            <span className="user-name-text">{user?.username}</span>
-          </div>
+            <span className="user-name-text">{user?.username || 'User'}</span>
+          </button>
 
           <div className="footer-actions">
             <button
@@ -349,37 +484,92 @@ const Dashboard = ({ onLogout }) => {
               <IconLogOut size={15} />
             </button>
           </div>
+
+          {/* Lightweight Anchored Avatar Popover */}
+          {isProfileOpen && (
+            <div className="profile-popover" ref={profilePopoverRef}>
+              <div className="popover-user-header">
+                <div className="popover-avatar">{userInitials}</div>
+                <div className="popover-user-info">
+                  <div className="popover-username">{user?.username || 'User'}</div>
+                  <div className="popover-email">{user?.email || 'Local Workspace'}</div>
+                </div>
+              </div>
+
+              <div className="popover-divider" />
+
+              <div className="popover-section-label">Workspace Utilities</div>
+              <button 
+                type="button" 
+                className="popover-menu-item"
+                onClick={handleExportTasks}
+              >
+                <IconDownload size={13} />
+                <span>Export Tasks (JSON)</span>
+              </button>
+
+              {counts.completed > 0 && (
+                <button 
+                  type="button" 
+                  className="popover-menu-item text-danger"
+                  onClick={handleClearCompleted}
+                >
+                  <IconTrash size={13} />
+                  <span>Clear Completed ({counts.completed})</span>
+                </button>
+              )}
+
+              <div className="popover-divider" />
+
+              <div className="popover-section-label">Theme</div>
+              <div className="popover-theme-toggle">
+                <button
+                  type="button"
+                  className={`popover-theme-btn ${theme === 'dark' ? 'active' : ''}`}
+                  onClick={() => setTheme('dark')}
+                >
+                  <IconMoon size={12} />
+                  Dark
+                </button>
+                <button
+                  type="button"
+                  className={`popover-theme-btn ${theme === 'light' ? 'active' : ''}`}
+                  onClick={() => setTheme('light')}
+                >
+                  <IconSun size={12} />
+                  Light
+                </button>
+              </div>
+
+              <div className="popover-divider" />
+
+              <button 
+                type="button" 
+                className="popover-menu-item"
+                onClick={onLogout}
+              >
+                <IconLogOut size={13} />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          )}
         </div>
       </aside>
 
       {/* Main Viewport */}
       <div className="main-viewport">
-        {/* Mobile App Bar */}
-        <div className="mobile-appbar">
-          <div className="mobile-appbar-left">
+        {/* Unified Responsive Topbar */}
+        <div className="viewport-topbar">
+          <div className="view-heading-group">
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(true)}
-              className="btn-icon-subtle"
-              aria-label="Open menu"
+              className="btn-icon-subtle mobile-menu-btn"
+              aria-label="Open sidebar menu"
+              title="Open menu"
             >
               <IconMenu size={18} />
             </button>
-            <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{getNavTitle()}</span>
-          </div>
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="btn-icon-subtle"
-            aria-label="Toggle theme"
-          >
-            {theme === 'dark' ? <IconSun size={16} /> : <IconMoon size={16} />}
-          </button>
-        </div>
-
-        {/* Desktop Viewport Topbar */}
-        <div className="viewport-topbar">
-          <div className="view-heading-group">
             <h1 className="view-heading">{getNavTitle()}</h1>
             <span className="view-count-badge">{filteredTasks.length}</span>
           </div>
@@ -405,7 +595,7 @@ const Dashboard = ({ onLogout }) => {
                 title="List View"
               >
                 <IconLayoutList size={13} />
-                List
+                <span className="segment-label">List</span>
               </button>
               <button
                 type="button"
@@ -414,99 +604,196 @@ const Dashboard = ({ onLogout }) => {
                 title="Kanban Board View"
               >
                 <IconLayoutGrid size={13} />
-                Board
+                <span className="segment-label">Board</span>
               </button>
             </div>
+
+            <button
+              type="button"
+              onClick={() => setIsCompanionVisible(!isCompanionVisible)}
+              className={`btn-icon-subtle ${isCompanionVisible ? 'active-icon' : ''}`}
+              title="Toggle Overview & Rhythm"
+              aria-label="Toggle Overview & Rhythm"
+            >
+              <IconPanelRight size={15} />
+            </button>
+
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="btn-icon-subtle mobile-theme-btn"
+              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} mode`}
+              aria-label="Toggle theme"
+            >
+              {theme === 'dark' ? <IconSun size={15} /> : <IconMoon size={15} />}
+            </button>
           </div>
         </div>
 
-        {/* Viewport Body */}
-        <div className="viewport-body">
-          {error && (
-            <div className="auth-error-banner" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>{error}</span>
-              <button 
-                type="button" 
-                onClick={() => setError('')} 
-                style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}
-              >
-                ✕
-              </button>
-            </div>
-          )}
-
-          {/* Frictionless Inline Quick-Add Task Input (Things 3 / Todoist style) */}
-          <form onSubmit={handleQuickCreate} className="quick-add-container">
-            <div className="quick-add-main-row">
-              <IconPlus size={16} />
-              <input
-                ref={quickInputRef}
-                type="text"
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                placeholder="Add a new task... (Press Enter to save)"
-                className="quick-add-input"
-              />
-            </div>
-
-            {newTitle.trim() && (
-              <div className="quick-add-options-row">
-                <div className="quick-selectors">
-                  <select
-                    value={newPriority}
-                    onChange={(e) => setNewPriority(e.target.value)}
-                    className="selector-select"
-                  >
-                    <option value="urgent">Urgent</option>
-                    <option value="high">High</option>
-                    <option value="medium">Medium</option>
-                    <option value="low">Low</option>
-                  </select>
-
-                  <select
-                    value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value)}
-                    className="selector-select"
-                  >
-                    <option value="Work">Work</option>
-                    <option value="Personal">Personal</option>
-                    <option value="Engineering">Engineering</option>
-                    <option value="Design">Design</option>
-                    <option value="General">General</option>
-                  </select>
-
-                  <input
-                    type="datetime-local"
-                    value={newDueDate}
-                    onChange={(e) => setNewDueDate(e.target.value)}
-                    className="selector-date"
-                    title="Set Due Date"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isCreating}
-                  className="btn-submit-quick"
+        {/* Dual-Pane Center Row: Task Stream + Daily Companion */}
+        <div className="workspace-center-row">
+          {/* Focused Task Stream Body */}
+          <main className="viewport-body">
+            {/* Context Subtitle Bar */}
+            <div className="context-header-bar">
+              <span className="context-subtitle-text">{getSubTitle()}</span>
+              {selectedDateFilter && (
+                <button 
+                  type="button" 
+                  onClick={() => setSelectedDateFilter(null)}
+                  className="btn-clear-date-tag"
                 >
-                  {isCreating ? 'Adding...' : 'Add'}
+                  Clear date filter ✕
+                </button>
+              )}
+            </div>
+
+            {error && (
+              <div className="auth-error-banner" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>{error}</span>
+                <button 
+                  type="button" 
+                  onClick={() => setError('')} 
+                  style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}
+                >
+                  ✕
                 </button>
               </div>
             )}
-          </form>
 
-          {/* Task Collection */}
-          {loading && tasks.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-              Loading workspace...
+            {/* Frictionless Inline Quick-Add Task Input */}
+            <form onSubmit={handleQuickCreate} className="quick-add-container">
+              <div className="quick-add-main-row">
+                <IconPlus size={16} />
+                <input
+                  ref={quickInputRef}
+                  type="text"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  placeholder="Add a new task... (Press Enter to save)"
+                  className="quick-add-input"
+                />
+              </div>
+
+              {newTitle.trim() && (
+                <div className="quick-add-options-row">
+                  <div className="quick-selectors">
+                    <div className="selector-chip-wrapper">
+                      <span className={`prio-dot-indicator prio-dot-${newPriority}`} />
+                      <select
+                        value={newPriority}
+                        onChange={(e) => setNewPriority(e.target.value)}
+                        className="selector-select"
+                      >
+                        <option value="urgent">Urgent</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                      </select>
+                    </div>
+
+                    <select
+                      value={newCategory}
+                      onChange={(e) => setNewCategory(e.target.value)}
+                      className="selector-select"
+                    >
+                      <option value="Work">Work</option>
+                      <option value="Personal">Personal</option>
+                      <option value="Engineering">Engineering</option>
+                      <option value="Design">Design</option>
+                      <option value="General">General</option>
+                    </select>
+
+                    <div className="date-preset-buttons">
+                      <button 
+                        type="button" 
+                        onClick={setDueDateToday}
+                        className="date-preset-btn"
+                      >
+                        Today
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={setDueDateTomorrow}
+                        className="date-preset-btn"
+                      >
+                        Tomorrow
+                      </button>
+                      <input
+                        type="datetime-local"
+                        value={newDueDate}
+                        onChange={(e) => setNewDueDate(e.target.value)}
+                        className="selector-date"
+                        title="Set Due Date"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isCreating}
+                    className="btn-submit-quick"
+                  >
+                    {isCreating ? 'Adding...' : 'Add ↵'}
+                  </button>
+                </div>
+              )}
+            </form>
+
+            {/* Quick Filter Strip (1-Click Slicing) */}
+            <div className="quick-filter-strip">
+              {[
+                { id: 'all', label: 'All' },
+                { id: 'urgent', label: '🔴 Urgent' },
+                { id: 'high', label: '🟠 High' },
+                { id: 'Work', label: 'Work' },
+                { id: 'Personal', label: 'Personal' },
+                { id: 'Engineering', label: 'Engineering' },
+                { id: 'Design', label: 'Design' }
+              ].map(pill => (
+                <button
+                  key={pill.id}
+                  type="button"
+                  className={`filter-pill-btn ${activeFilterPill === pill.id ? 'active' : ''}`}
+                  onClick={() => setActiveFilterPill(activeFilterPill === pill.id ? 'all' : pill.id)}
+                >
+                  {pill.label}
+                </button>
+              ))}
             </div>
-          ) : (
-            <TaskList
-              tasks={filteredTasks}
-              onUpdateTask={handleUpdateTask}
-              onDeleteTask={handleDeleteTask}
-              viewMode={viewMode}
-            />
+
+            {/* Task Stream Collection */}
+            {loading && tasks.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                Loading workspace...
+              </div>
+            ) : (
+              <TaskList
+                tasks={filteredTasks}
+                onUpdateTask={handleUpdateTask}
+                onDeleteTask={handleDeleteTask}
+                viewMode={viewMode}
+                activeNav={activeNav}
+              />
+            )}
+          </main>
+
+          {/* Right Daily Companion Panel / Drawer */}
+          {isCompanionVisible && (
+            <>
+              <div 
+                className="companion-backdrop" 
+                onClick={() => setIsCompanionVisible(false)}
+                aria-hidden="true" 
+              />
+              <DailyCompanion
+                tasks={tasks}
+                selectedDateFilter={selectedDateFilter}
+                onSelectDate={(d) => setSelectedDateFilter(d)}
+                onClearDateFilter={() => setSelectedDateFilter(null)}
+                onClose={() => setIsCompanionVisible(false)}
+              />
+            </>
           )}
         </div>
       </div>
