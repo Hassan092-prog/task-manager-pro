@@ -46,6 +46,35 @@ def test_register_missing_fields(client):
     })
     assert res.status_code == 400
 
+def test_register_validation_rules(client):
+    # Short password
+    res_pw = client.post('/api/auth/register', json={
+        'username': 'validuser',
+        'email': 'valid@example.com',
+        'password': '123'
+    })
+    assert res_pw.status_code == 400
+    assert 'Password must contain at least 6 characters' in res_pw.get_json()['error']
+
+    # Invalid email
+    res_em = client.post('/api/auth/register', json={
+        'username': 'validuser',
+        'email': 'not-an-email',
+        'password': 'validpassword123'
+    })
+    assert res_em.status_code == 400
+    assert 'Valid email address is required' in res_em.get_json()['error']
+
+    # Short username
+    res_un = client.post('/api/auth/register', json={
+        'username': 'a',
+        'email': 'valid@example.com',
+        'password': 'validpassword123'
+    })
+    assert res_un.status_code == 400
+    assert 'Username must be between 2 and 80 characters' in res_un.get_json()['error']
+
+
 def test_login_wrong_password(client):
     client.post('/api/auth/register', json={
         'username': 'creduser',

@@ -1,10 +1,17 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import api from '../services/api';
 
 describe('API Service & Axios Interceptors', () => {
+  const originalLocation = window.location;
+
   beforeEach(() => {
     localStorage.clear();
     vi.restoreAllMocks();
+  });
+
+  afterEach(() => {
+    delete window.location;
+    window.location = originalLocation;
   });
 
   it('attaches Bearer token in request header if token is in localStorage', async () => {

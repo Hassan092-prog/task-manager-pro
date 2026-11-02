@@ -17,6 +17,15 @@ def register():
 
         if not username or not email or not password:
             return jsonify({'error': 'Username, email, and password are required'}), 400
+
+        if len(username) < 2 or len(username) > 80:
+            return jsonify({'error': 'Username must be between 2 and 80 characters'}), 400
+
+        if '@' not in email or '.' not in email.split('@')[-1]:
+            return jsonify({'error': 'Valid email address is required'}), 400
+
+        if len(str(password)) < 6:
+            return jsonify({'error': 'Password must contain at least 6 characters'}), 400
         
         # Check if user already exists
         if User.query.filter_by(email=email).first():
