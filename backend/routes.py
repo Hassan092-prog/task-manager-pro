@@ -55,7 +55,7 @@ def get_tasks():
 def create_task():
     try:
         current_user_id = int(get_jwt_identity())
-        data = request.get_json()
+        data = request.get_json() or {}
         
         title = data.get('title', '').strip()
         if not title:
@@ -64,7 +64,10 @@ def create_task():
         # Parse due_date if provided
         due_date = None
         if data.get('due_date'):
-            due_date = datetime.fromisoformat(data.get('due_date').replace('Z', '+00:00'))
+            try:
+                due_date = datetime.fromisoformat(str(data.get('due_date')).replace('Z', '+00:00'))
+            except (ValueError, TypeError):
+                return jsonify({'error': 'Invalid due date format. Expected ISO 8601 string'}), 400
         
         priority = data.get('priority', 'medium').lower()
         if priority not in ['low', 'medium', 'high', 'urgent']:
@@ -125,10 +128,10 @@ def update_task(task_id):
         if not task:
             return jsonify({'error': 'Task not found'}), 404
         
-        data = request.get_json()
+        data = request.get_json() or {}
         
         if 'title' in data:
-            new_title = data['title'].strip()
+            new_title = (data['title'] or '').strip()
             if new_title:
                 task.title = new_title
         if 'description' in data:
@@ -157,15 +160,21 @@ def update_task(task_id):
                 task.status = 'todo'
 
         if 'priority' in data:
-            new_prio = data['priority'].lower()
+            new_prio = (data['priority'] or '').lower()
             if new_prio in ['low', 'medium', 'high', 'urgent']:
                 task.priority = new_prio
         if 'category' in data:
-            new_cat = data['category'].strip()
+            new_cat = (data['category'] or '').strip()
             if new_cat:
                 task.category = new_cat
         if 'due_date' in data:
-            task.due_date = datetime.fromisoformat(data['due_date'].replace('Z', '+00:00')) if data['due_date'] else None
+            if data['due_date']:
+                try:
+                    task.due_date = datetime.fromisoformat(str(data['due_date']).replace('Z', '+00:00'))
+                except (ValueError, TypeError):
+                    return jsonify({'error': 'Invalid due date format. Expected ISO 8601 string'}), 400
+            else:
+                task.due_date = None
 
         if 'subtasks' in data:
             raw_subtasks = data['subtasks']

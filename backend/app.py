@@ -267,6 +267,24 @@ def create_app():
             }
         }), 200
 
+    @app.errorhandler(404)
+    def handle_not_found(e):
+        if request.path.startswith('/api/') or request.headers.get('Accept') == 'application/json':
+            return jsonify({'error': 'Resource not found'}), 404
+        return e
+
+    @app.errorhandler(405)
+    def handle_method_not_allowed(e):
+        if request.path.startswith('/api/') or request.headers.get('Accept') == 'application/json':
+            return jsonify({'error': 'Method not allowed'}), 405
+        return e
+
+    @app.errorhandler(500)
+    def handle_internal_server_error(e):
+        if request.path.startswith('/api/') or request.headers.get('Accept') == 'application/json':
+            return jsonify({'error': 'Internal server error'}), 500
+        return e
+
     return app
 if __name__ == '__main__':
     app = create_app()

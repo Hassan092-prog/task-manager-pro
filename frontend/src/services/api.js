@@ -17,6 +17,16 @@ api.interceptors.request.use((config) => {
 let isRefreshing = false;
 let failedQueue = [];
 
+const setAuthHeader = (requestConfig, token) => {
+  if (!requestConfig) return;
+  requestConfig.headers = requestConfig.headers || {};
+  if (typeof requestConfig.headers.set === 'function') {
+    requestConfig.headers.set('Authorization', `Bearer ${token}`);
+  } else {
+    requestConfig.headers.Authorization = `Bearer ${token}`;
+  }
+};
+
 const processQueue = (error, token = null) => {
   failedQueue.forEach((prom) => {
     if (error) {
@@ -71,8 +81,7 @@ api.interceptors.response.use(
           failedQueue.push({ resolve, reject });
         })
           .then((newToken) => {
-            originalRequest.headers = originalRequest.headers || {};
-            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            setAuthHeader(originalRequest, newToken);
             return api.request(originalRequest);
           })
           .catch((err) => Promise.reject(err));
@@ -97,8 +106,7 @@ api.interceptors.response.use(
         api.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
         processQueue(null, newAccessToken);
 
-        originalRequest.headers = originalRequest.headers || {};
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        setAuthHeader(originalRequest, newAccessToken);
         return api.request(originalRequest);
       } catch (refreshErr) {
         processQueue(refreshErr, null);

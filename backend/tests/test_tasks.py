@@ -401,4 +401,34 @@ def test_model_to_dict_deserialization_fallback(client, register_and_login):
     d_bad = t_bad.to_dict()
     assert d_bad['subtasks'] == []
 
+def test_task_payload_validation_and_edge_cases(client, register_and_login):
+    headers = register_and_login(username='payloadedgeuser', email='payloadedge@example.com')
+
+    # Post with invalid due_date format
+    bad_date_res = client.post('/api/tasks', headers=headers, json={
+        'title': 'Bad Date Task',
+        'due_date': 'not-a-valid-date'
+    })
+    assert bad_date_res.status_code == 400
+    assert 'Invalid due date format' in bad_date_res.get_json()['error']
+
+    # Post with empty json body
+    empty_body_res = client.post('/api/tasks', headers=headers, json={})
+    assert empty_body_res.status_code == 400
+    assert 'Task title is required' in empty_body_res.get_json()['error']
+
+    # Create valid task
+    ok_res = client.post('/api/tasks', headers=headers, json={'title': 'Valid Task'})
+    assert ok_res.status_code == 201
+    tid = ok_res.get_json()['task']['id']
+
+    # Put with invalid due_date
+    put_bad_date = client.put(f'/api/tasks/{tid}', headers=headers, json={'due_date': 'malformed'})
+    assert put_bad_date.status_code == 400
+
+    # Put with empty json body (graceful no-op)
+    put_empty = client.put(f'/api/tasks/{tid}', headers=headers, json={})
+    assert put_empty.status_code == 200
+
+
 
