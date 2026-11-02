@@ -85,12 +85,16 @@ const DailyCompanion = ({
     const completedTodayTasks = dueTodayTasks.filter(t => t.completed);
     const urgentTasks = activeTasks.filter(t => t.priority === 'urgent' || t.priority === 'high');
 
-    const totalTodayOrActive = dueTodayTasks.length;
+    // If tasks are scheduled for today, rhythm measures today's progress; otherwise measures general workload
+    const hasDueToday = dueTodayTasks.length > 0;
+    const focusTasks = hasDueToday ? dueTodayTasks : tasks;
+    const focusCompleted = hasDueToday ? completedTodayTasks.length : completedTasks.length;
+    const focusTotal = focusTasks.length;
     
     // Subtask metric aggregation
     let totalSubtasks = 0;
     let completedSubtasks = 0;
-    tasks.forEach(t => {
+    focusTasks.forEach(t => {
       if (Array.isArray(t.subtasks)) {
         t.subtasks.forEach(s => {
           totalSubtasks++;
@@ -99,8 +103,8 @@ const DailyCompanion = ({
       }
     });
 
-    const totalDenominator = totalTodayOrActive + totalSubtasks;
-    const completedNumerator = completedTodayTasks.length + completedSubtasks;
+    const totalDenominator = focusTotal + totalSubtasks;
+    const completedNumerator = focusCompleted + completedSubtasks;
 
     const completionPercent = totalDenominator > 0 
       ? Math.round((completedNumerator / totalDenominator) * 100) 
@@ -123,8 +127,9 @@ const DailyCompanion = ({
       dueTodayCount: dueTodayTasks.filter(t => !t.completed).length,
       urgentCount: urgentTasks.length,
       completionPercent,
-      completedTodayCount: completedTodayTasks.length,
-      totalTodayCount: totalTodayOrActive,
+      completedTodayCount: hasDueToday ? completedTodayTasks.length : completedTasks.length,
+      totalTodayCount: hasDueToday ? dueTodayTasks.length : tasks.length,
+      hasDueToday,
       projects
     };
   }, [tasks]);

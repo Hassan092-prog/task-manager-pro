@@ -88,8 +88,9 @@ def create_task():
         if isinstance(raw_subtasks, list):
             for s in raw_subtasks:
                 if isinstance(s, dict) and s.get('title', '').strip():
+                    sid = str(s.get('id')).strip() if s.get('id') else ''
                     clean_subtasks.append({
-                        'id': str(s.get('id', uuid.uuid4().hex[:8])),
+                        'id': sid if sid else uuid.uuid4().hex[:8],
                         'title': s['title'].strip(),
                         'completed': bool(s.get('completed', False))
                     })
@@ -172,8 +173,9 @@ def update_task(task_id):
             if isinstance(raw_subtasks, list):
                 for s in raw_subtasks:
                     if isinstance(s, dict) and s.get('title', '').strip():
+                        sid = str(s.get('id')).strip() if s.get('id') else ''
                         clean_subtasks.append({
-                            'id': str(s.get('id', uuid.uuid4().hex[:8])),
+                            'id': sid if sid else uuid.uuid4().hex[:8],
                             'title': s['title'].strip(),
                             'completed': bool(s.get('completed', False))
                         })
@@ -222,9 +224,10 @@ def add_subtask(task_id):
         if not title:
             return jsonify({'error': 'Subtask title is required'}), 400
         
+        sid = str(data.get('id')).strip() if data.get('id') else ''
         current_subtasks = [dict(s) for s in task.to_dict().get('subtasks', [])]
         new_subtask = {
-            'id': str(data.get('id', uuid.uuid4().hex[:8])),
+            'id': sid if sid else uuid.uuid4().hex[:8],
             'title': title,
             'completed': bool(data.get('completed', False))
         }
@@ -257,8 +260,11 @@ def update_subtask(task_id, subtask_id):
         
         for s in current_subtasks:
             if str(s.get('id')) == str(subtask_id):
-                if 'title' in data and data['title'].strip():
-                    s['title'] = data['title'].strip()
+                if 'title' in data:
+                    new_title = data['title'].strip() if isinstance(data['title'], str) else ''
+                    if not new_title:
+                        return jsonify({'error': 'Subtask title cannot be empty'}), 400
+                    s['title'] = new_title
                 if 'completed' in data:
                     s['completed'] = bool(data['completed'])
                 found = True

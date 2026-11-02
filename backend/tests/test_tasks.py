@@ -244,3 +244,30 @@ def test_subtasks_multi_tenant_isolation(client, register_and_login):
     # User B attempts to delete User A's subtask -> 404
     b_del = client.delete(f'/api/tasks/{task_id}/subtasks/sub-secret', headers=user_b)
     assert b_del.status_code == 404
+
+def test_subtasks_validation_and_id_sanitization(client, register_and_login):
+    headers = register_and_login(username='subvaluser', email='subval@example.com')
+
+    # Create task with subtasks having null or empty id
+    res = client.post('/api/tasks', headers=headers, json={
+        'title': 'Sanitization Task',
+        'subtasks': [
+            {'id': '', 'title': 'Empty ID Subtask'},
+            {'id': None, 'title': 'None ID Subtask'}
+        ]
+    })
+    assert res.status_code == 201
+    task = res.get_json()['task']
+    st0 = task['subtasks'][0]
+    st1 = task['subtasks'][1]
+    assert len(st0['id']) > 0 and st0['id'] != 'None' and st0['id'] != ''
+    assert len(st1['id']) > 0 and st1['id'] != 'None' and st1['id'] != ''
+    assert st0['id'] != st1['id']
+
+    # Update subtask with empty title -> 400
+    bad_update = client.put(f"/api/tasks/{task['id']}/subtasks/{st0['id']}", headers=headers, json={
+        'title': '   '
+    })
+    assert bad_update.status_code == 400
+    assert 'cannot be empty' in bad_update.get_json()['error']
+

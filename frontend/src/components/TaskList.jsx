@@ -55,6 +55,7 @@ export const BoardTaskCard = ({
   const [internalIsEditing, setInternalIsEditing] = useState(false);
   const isEditing = externalIsEditing !== undefined ? externalIsEditing : internalIsEditing;
   const setIsEditing = externalSetIsEditing || setInternalIsEditing;
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const [editTitle, setEditTitle] = useState(task.title);
   const [editPriority, setEditPriority] = useState(task.priority || 'medium');
@@ -166,13 +167,20 @@ export const BoardTaskCard = ({
       <div className="board-task-bottom">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
           {totalSubtasks > 0 && (
-            <span
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded(prev => !prev);
+              }}
               className={`subtask-mini-badge ${completedSubtasks === totalSubtasks ? 'all-done' : ''}`}
-              title={`${completedSubtasks} of ${totalSubtasks} subtasks completed`}
+              title={`${completedSubtasks} of ${totalSubtasks} subtasks completed (click to toggle checklist)`}
+              aria-label={`Toggle checklist for ${task.title}`}
+              style={{ cursor: 'pointer', background: 'transparent' }}
             >
               <IconListTodo size={11} />
               <span>{completedSubtasks}/{totalSubtasks}</span>
-            </span>
+            </button>
           )}
           {task.category && task.category !== 'General' && (
             <span className="tag-badge">{task.category}</span>
@@ -212,6 +220,38 @@ export const BoardTaskCard = ({
           </button>
         </div>
       </div>
+
+      {isExpanded && !isEditing && totalSubtasks > 0 && (
+        <div 
+          className="subtasks-container" 
+          style={{ padding: '0.35rem 0.4rem 0.45rem', marginTop: '0.25rem' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {subtasks.map(st => (
+            <div key={st.id} className={`subtask-item ${st.completed ? 'is-completed' : ''}`}>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const nextSubtasks = subtasks.map(s => 
+                    s.id === st.id ? { ...s, completed: !s.completed } : s
+                  );
+                  onUpdateTask(task.id, { subtasks: nextSubtasks });
+                }}
+                className={`subtask-checkbox ${st.completed ? 'checked' : ''}`}
+                aria-label={st.completed ? `Mark subtask ${st.title} incomplete` : `Mark subtask ${st.title} complete`}
+              >
+                {st.completed && (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+              </button>
+              <span className="subtask-title" style={{ fontSize: '0.74rem' }}>{st.title}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

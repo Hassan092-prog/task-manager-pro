@@ -47,7 +47,8 @@ describe('TaskList & Kanban Board component', () => {
     expect(screen.getByText('3 tasks')).toBeInTheDocument();
   });
 
-  it('renders subtask mini badge on board cards when task has subtasks', () => {
+  it('renders subtask mini badge on board cards and toggles checklist items', () => {
+    const handleUpdate = vi.fn();
     const tasksWithSubtasks = [
       {
         id: 1,
@@ -65,13 +66,31 @@ describe('TaskList & Kanban Board component', () => {
     render(
       <TaskList
         tasks={tasksWithSubtasks}
-        onUpdateTask={vi.fn()}
+        onUpdateTask={handleUpdate}
         onDeleteTask={vi.fn()}
         viewMode="board"
       />
     );
 
+    const badge = screen.getByRole('button', { name: /toggle checklist for board task with checklist/i });
+    expect(badge).toBeInTheDocument();
     expect(screen.getByText('1/2')).toBeInTheDocument();
+
+    // Click badge to expand checklist
+    fireEvent.click(badge);
+    expect(screen.getByText('Part A')).toBeInTheDocument();
+    expect(screen.getByText('Part B')).toBeInTheDocument();
+
+    // Toggle subtask Part B
+    const partBCheckbox = screen.getByRole('button', { name: /mark subtask part b complete/i });
+    fireEvent.click(partBCheckbox);
+
+    expect(handleUpdate).toHaveBeenCalledWith(1, {
+      subtasks: [
+        { id: 'st-1', title: 'Part A', completed: true },
+        { id: 'st-2', title: 'Part B', completed: true }
+      ]
+    });
   });
 
   it('renders Kanban board with decoupled status columns', () => {

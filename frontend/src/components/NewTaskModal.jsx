@@ -99,6 +99,16 @@ const NewTaskModal = ({
     setSubmitting(true);
     setError('');
 
+    // Ensure any typed subtask in input that wasn't explicitly added is included
+    let finalSubtasks = [...subtasks];
+    if (subtaskInput.trim()) {
+      finalSubtasks.push({
+        id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : 'sub_' + Date.now(),
+        title: subtaskInput.trim(),
+        completed: false
+      });
+    }
+
     try {
       await onSubmit({
         title: title.trim(),
@@ -107,7 +117,7 @@ const NewTaskModal = ({
         category,
         status,
         completed: status === 'done',
-        subtasks,
+        subtasks: finalSubtasks,
         due_date: dueDate ? new Date(dueDate).toISOString() : null
       });
       onClose();
