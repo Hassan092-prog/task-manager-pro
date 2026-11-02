@@ -6,18 +6,24 @@ const TaskItem = ({ task, onUpdate, onDelete }) => {
   const [editTitle, setEditTitle] = useState(task.title);
   const [editPriority, setEditPriority] = useState(task.priority || 'medium');
   const [editCategory, setEditCategory] = useState(task.category || 'General');
+  const [editStatus, setEditStatus] = useState(task.completed ? 'done' : (task.status || 'todo'));
   const [editDueDate, setEditDueDate] = useState(task.due_date ? task.due_date.substring(0, 16) : '');
 
   const startEditing = () => {
     setEditTitle(task.title);
     setEditPriority(task.priority || 'medium');
     setEditCategory(task.category || 'General');
+    setEditStatus(task.completed ? 'done' : (task.status || 'todo'));
     setEditDueDate(task.due_date ? task.due_date.substring(0, 16) : '');
     setIsEditing(true);
   };
 
   const handleToggle = () => {
-    onUpdate(task.id, { completed: !task.completed });
+    const nextCompleted = !task.completed;
+    onUpdate(task.id, {
+      completed: nextCompleted,
+      status: nextCompleted ? 'done' : 'todo'
+    });
   };
 
   const handleSave = (e) => {
@@ -27,6 +33,8 @@ const TaskItem = ({ task, onUpdate, onDelete }) => {
       title: editTitle.trim(),
       priority: editPriority,
       category: editCategory,
+      status: editStatus,
+      completed: editStatus === 'done',
       due_date: editDueDate ? new Date(editDueDate).toISOString() : null
     });
     setIsEditing(false);
@@ -36,6 +44,7 @@ const TaskItem = ({ task, onUpdate, onDelete }) => {
     setEditTitle(task.title);
     setEditPriority(task.priority || 'medium');
     setEditCategory(task.category || 'General');
+    setEditStatus(task.completed ? 'done' : (task.status || 'todo'));
     setEditDueDate(task.due_date ? task.due_date.substring(0, 16) : '');
     setIsEditing(false);
   };
@@ -96,6 +105,10 @@ const TaskItem = ({ task, onUpdate, onDelete }) => {
           </div>
 
           <div className="task-row-meta">
+            {task.status === 'in_progress' && !task.completed && (
+              <span className="status-badge in-progress">In Progress</span>
+            )}
+
             {task.category && task.category !== 'General' && (
               <span className="tag-badge">{task.category}</span>
             )}
@@ -146,9 +159,20 @@ const TaskItem = ({ task, onUpdate, onDelete }) => {
           />
           <div className="task-edit-controls">
             <select
+              value={editStatus}
+              onChange={(e) => setEditStatus(e.target.value)}
+              className="selector-select"
+              aria-label="Edit status"
+            >
+              <option value="todo">To Do</option>
+              <option value="in_progress">In Progress</option>
+              <option value="done">Done</option>
+            </select>
+            <select
               value={editPriority}
               onChange={(e) => setEditPriority(e.target.value)}
               className="selector-select"
+              aria-label="Edit priority"
             >
               <option value="urgent">Urgent</option>
               <option value="high">High</option>

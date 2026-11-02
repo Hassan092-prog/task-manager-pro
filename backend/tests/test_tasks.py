@@ -17,6 +17,7 @@ def test_task_crud_lifecycle(client, register_and_login):
     assert created_task['priority'] == 'high'
     assert created_task['category'] == 'Engineering'
     assert created_task['completed'] is False
+    assert created_task['status'] == 'todo'
 
     # 2. Get tasks list
     get_res = client.get('/api/tasks', headers=headers)
@@ -35,6 +36,7 @@ def test_task_crud_lifecycle(client, register_and_login):
     updated_task = update_res.get_json()['task']
     assert updated_task['title'] == 'Updated CRUD Task'
     assert updated_task['completed'] is True
+    assert updated_task['status'] == 'done'
     assert updated_task['priority'] == 'urgent'
 
     # 4. Delete task
@@ -92,3 +94,64 @@ def test_task_filters_and_search(client, register_and_login):
     assert len(search_res.get_json()) == 1
     assert search_res.get_json()[0]['title'] == 'Low priority cleanup'
 
+def test_task_status_decoupling_and_sync(client, register_and_login):
+    headers = register_and_login(username='statususer', email='status@example.com')
+
+    # 1. Create task with explicit status 'in_progress' and priority 'low' (decoupled)
+    res = client.post('/api/tasks', headers=headers, json={
+        'title': 'In Progress Task',
+        'status': 'in_progress',
+        'priority': 'low'
+    })
+    assert res.status_code == 201
+    task = res.get_json()['task']
+    assert task['status'] == 'in_progress'
+    assert task['priority'] == 'low'
+    assert task['completed'] is False
+    task_id = task['id']
+
+    # 2. Update status to 'done' -> should automatically set completed = True
+    update_res = client.put(f'/api/tasks/{task_id}', headers=headers, json={
+        'status': 'done'
+    })
+    assert update_res.status_code == 200
+    updated = update_res.get_json()['task']
+    assert updated['status'] == 'done'
+    assert updated['completed'] is True
+
+    # 3. Toggle completed = False -> should automatically reset status from 'done' to 'todo'
+    uncheck_res = client.put(f'/api/tasks/{task_id}', headers=headers, json={
+        'completed': False
+    })
+    assert uncheck_res.status_code == 200
+    unchecked = uncheck_res.get_json()['task']
+    assert unchecked['completed'] is False
+    assert unchecked['status'] == 'todo'
+
+    # 4. Drag to 'in_progress' -> should keep completed = False
+    move_progress = client.put(f'/api/tasks/{task_id}', headers=headers, json={
+        'status': 'in_progress'
+    })
+    assert move_progress.status_code == 200
+    in_prog = move_progress.get_json()['task']
+    assert in_prog['status'] == 'in_progress'
+    assert in_prog['completed'] is False
+
+def test_task_status_filtering(client, register_and_login):
+    headers = register_and_login(username='statusfilteruser', email='statusfilter@example.com')
+
+    client.post('/api/tasks', headers=headers, json={'title': 'Todo Item 1', 'status': 'todo'})
+    client.post('/api/tasks', headers=headers, json={'title': 'Todo Item 2', 'status': 'todo'})
+    client.post('/api/tasks', headers=headers, json={'title': 'WIP Item', 'status': 'in_progress'})
+    client.post('/api/tasks', headers=headers, json={'title': 'Done Item', 'status': 'done'})
+
+    todo_res = client.get('/api/tasks?status=todo', headers=headers)
+    assert len(todo_res.get_json()) == 2
+
+    wip_res = client.get('/api/tasks?status=in_progress', headers=headers)
+    assert len(wip_res.get_json()) == 1
+    assert wip_res.get_json()[0]['title'] == 'WIP Item'
+
+    done_res = client.get('/api/tasks?status=done', headers=headers)
+    assert len(done_res.get_json()) == 1
+    assert done_res.get_json()[0]['title'] == 'Done Item'

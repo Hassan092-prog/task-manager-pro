@@ -13,6 +13,10 @@ def get_tasks():
         query = Task.query.filter_by(user_id=current_user_id)
         
         # Filters
+        status = request.args.get('status')
+        if status:
+            query = query.filter_by(status=status.lower())
+            
         priority = request.args.get('priority')
         if priority:
             query = query.filter_by(priority=priority)
@@ -66,9 +70,21 @@ def create_task():
             
         category = data.get('category', 'General').strip() or 'General'
         
+        status = data.get('status', 'todo').lower() if data.get('status') else 'todo'
+        if status not in ['todo', 'in_progress', 'done']:
+            status = 'todo'
+            
+        completed = bool(data.get('completed', False))
+        if status == 'done':
+            completed = True
+        elif completed:
+            status = 'done'
+        
         task = Task(
             title=title,
             description=data.get('description', ''),
+            completed=completed,
+            status=status,
             priority=priority,
             category=category,
             due_date=due_date,
@@ -101,8 +117,23 @@ def update_task(task_id):
                 task.title = new_title
         if 'description' in data:
             task.description = data['description']
+            
+        # Dual-sync status & completed
+        if 'status' in data:
+            new_status = (data['status'] or '').lower().strip()
+            if new_status in ['todo', 'in_progress', 'done']:
+                task.status = new_status
+                task.completed = (new_status == 'done')
+                
         if 'completed' in data:
-            task.completed = bool(data['completed'])
+            is_comp = bool(data['completed'])
+            task.completed = is_comp
+            if 'status' not in data:
+                if is_comp:
+                    task.status = 'done'
+                elif task.status == 'done':
+                    task.status = 'todo'
+
         if 'priority' in data:
             new_prio = data['priority'].lower()
             if new_prio in ['low', 'medium', 'high', 'urgent']:

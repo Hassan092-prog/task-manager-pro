@@ -9,6 +9,7 @@ const NewTaskModal = ({
 }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [status, setStatus] = useState('todo');
   const [priority, setPriority] = useState('medium');
   const [category, setCategory] = useState(defaultCategory);
   const [dueDate, setDueDate] = useState('');
@@ -22,6 +23,7 @@ const NewTaskModal = ({
     if (isOpen) {
       setTitle('');
       setDescription('');
+      setStatus('todo');
       setPriority('medium');
       setCategory(defaultCategory);
       setDueDate('');
@@ -81,6 +83,8 @@ const NewTaskModal = ({
         description: description.trim(),
         priority,
         category,
+        status,
+        completed: status === 'done',
         due_date: dueDate ? new Date(dueDate).toISOString() : null
       });
       onClose();
@@ -152,6 +156,29 @@ const NewTaskModal = ({
                 className="modal-textarea"
                 rows={2}
               />
+            </div>
+
+            {/* Status Selector */}
+            <div className="modal-field">
+              <label className="modal-field-label">
+                Status
+              </label>
+              <div className="modal-chips-row">
+                {[
+                  { id: 'todo', label: '📋 To Do' },
+                  { id: 'in_progress', label: '⚡ In Progress' },
+                  { id: 'done', label: '✅ Done' }
+                ].map(s => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    className={`modal-chip ${status === s.id ? 'active' : ''}`}
+                    onClick={() => setStatus(s.id)}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Priority Selector */}

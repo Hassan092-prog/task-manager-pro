@@ -21,14 +21,20 @@ describe('TaskItem component', () => {
     expect(screen.getByText('Engineering')).toBeInTheDocument();
   });
 
-  it('invokes onUpdate when checkbox circle is clicked', () => {
+  it('invokes onUpdate with synchronized status when checkbox circle is clicked', () => {
     const handleUpdate = vi.fn();
     render(<TaskItem task={sampleTask} onUpdate={handleUpdate} onDelete={vi.fn()} />);
     
     const checkboxBtn = screen.getByRole('button', { name: /mark completed/i });
     fireEvent.click(checkboxBtn);
 
-    expect(handleUpdate).toHaveBeenCalledWith(42, { completed: true });
+    expect(handleUpdate).toHaveBeenCalledWith(42, { completed: true, status: 'done' });
+  });
+
+  it('renders In Progress badge when task is in_progress and not completed', () => {
+    const inProgTask = { ...sampleTask, status: 'in_progress', completed: false };
+    render(<TaskItem task={inProgTask} onUpdate={vi.fn()} onDelete={vi.fn()} />);
+    expect(screen.getByText('In Progress')).toBeInTheDocument();
   });
 
   it('invokes onDelete when delete button is clicked', () => {

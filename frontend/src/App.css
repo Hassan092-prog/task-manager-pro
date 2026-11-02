@@ -992,6 +992,21 @@
   border-radius: var(--radius-xs);
 }
 
+.status-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--radius-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.status-badge.in-progress {
+  background-color: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+}
+
 .date-indicator {
   display: flex;
   align-items: center;
@@ -1128,6 +1143,12 @@
   flex-direction: column;
   gap: 0.6rem;
   min-height: 480px;
+  transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.board-column.is-over {
+  border-color: var(--accent-solid);
+  background-color: rgba(99, 102, 241, 0.05);
 }
 
 .board-col-head {
@@ -1143,10 +1164,46 @@
   color: var(--text-secondary);
 }
 
+.board-col-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot-todo {
+  background-color: var(--text-muted);
+}
+
+.status-dot-in_progress {
+  background-color: #38bdf8;
+  box-shadow: 0 0 6px rgba(56, 189, 248, 0.4);
+}
+
+.status-dot-done {
+  background-color: var(--success);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
+}
+
 .board-col-tasks {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  flex: 1;
+  min-height: 140px;
+}
+
+.board-col-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background-color: rgba(255, 255, 255, 0.01);
 }
 
 .board-task-card {
@@ -1157,8 +1214,9 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  cursor: pointer;
-  transition: all var(--transition-fast);
+  cursor: grab;
+  user-select: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .board-task-card:hover {
@@ -1167,7 +1225,20 @@
 }
 
 .board-task-card.is-done {
-  opacity: 0.5;
+  opacity: 0.6;
+}
+
+.board-task-card.is-overlay {
+  cursor: grabbing;
+  border-color: var(--accent-solid);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.35), 0 8px 10px -6px rgba(0, 0, 0, 0.35);
+  transform: scale(1.02);
+  background-color: var(--bg-surface);
+  z-index: 9999;
+}
+
+.board-task-card.is-dragging {
+  opacity: 0.35;
 }
 
 .board-task-top {
