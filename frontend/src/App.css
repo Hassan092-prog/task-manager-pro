@@ -2271,3 +2271,246 @@
     height: 48px;
   }
 }
+
+/* ==========================================================================
+   Phase 4: Subtasks, Checklists & Nested Items
+   ========================================================================== */
+
+/* Subtasks Badge on List View */
+.subtasks-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-xs);
+  background-color: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  line-height: 1;
+}
+
+.subtasks-badge:hover {
+  background-color: var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.subtasks-badge.all-done {
+  background-color: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.25);
+  color: var(--prio-done);
+}
+
+/* Subtasks Mini Badge on Kanban Board Cards */
+.subtask-mini-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.12rem 0.35rem;
+  border-radius: var(--radius-xs);
+  background-color: var(--bg-hover);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.subtask-mini-badge.all-done {
+  background-color: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.25);
+  color: var(--prio-done);
+}
+
+/* Subtasks Container & Checklist Rows in TaskItem */
+.subtasks-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.4rem 0.6rem 0.6rem 2.5rem;
+  background-color: rgba(0, 0, 0, 0.02);
+  border-top: 1px solid var(--border-subtle);
+}
+
+[data-theme='dark'] .subtasks-container {
+  background-color: rgba(255, 255, 255, 0.015);
+}
+
+.subtask-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.2rem 0.3rem;
+  border-radius: var(--radius-xs);
+  transition: background-color var(--transition-fast);
+}
+
+.subtask-item:hover {
+  background-color: var(--bg-hover);
+}
+
+.subtask-item.is-completed .subtask-title {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.subtask-checkbox {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1.5px solid var(--border-strong);
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+  color: #ffffff;
+}
+
+.subtask-checkbox:hover {
+  border-color: var(--accent-solid);
+}
+
+.subtask-checkbox.checked {
+  background-color: var(--prio-done);
+  border-color: var(--prio-done);
+}
+
+.subtask-checkbox svg {
+  width: 10px;
+  height: 10px;
+  stroke-width: 3;
+}
+
+.subtask-title {
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.btn-subtask-delete {
+  opacity: 0;
+  padding: 0.15rem;
+  border-radius: var(--radius-xs);
+  transition: opacity var(--transition-fast);
+  color: var(--text-muted);
+}
+
+.subtask-item:hover .btn-subtask-delete {
+  opacity: 1;
+}
+
+.btn-subtask-delete:hover {
+  color: var(--prio-urgent);
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+/* Subtask Add Row inside TaskItem */
+.subtask-add-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.15rem;
+}
+
+.subtask-add-input {
+  background: transparent;
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-xs);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.78rem;
+  color: var(--text-primary);
+  flex: 1;
+  font-family: inherit;
+  transition: border-color var(--transition-fast);
+}
+
+.subtask-add-input:focus {
+  border-color: var(--border-focus);
+  border-style: solid;
+  outline: none;
+  background-color: var(--bg-surface);
+}
+
+.btn-action-subtask {
+  color: var(--text-muted);
+}
+
+.btn-action-subtask:hover {
+  color: var(--text-primary);
+}
+
+/* Modal Subtask Checklist Builder */
+.modal-subtasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 0.5rem;
+  max-height: 140px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.modal-subtask-item {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.25rem 0.45rem;
+  background-color: var(--bg-input);
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-subtle);
+  font-size: 0.8rem;
+}
+
+.modal-subtask-bullet {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.modal-subtask-title {
+  flex: 1;
+  min-width: 0;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.btn-remove-subtask {
+  padding: 0.15rem;
+  color: var(--text-muted);
+}
+
+.btn-remove-subtask:hover {
+  color: var(--prio-urgent);
+}
+
+.modal-subtask-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.modal-subtask-input {
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.65rem;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-family: inherit;
+  flex: 1;
+  transition: border-color var(--transition-fast);
+}
+
+.modal-subtask-input:focus {
+  border-color: var(--border-focus);
+  outline: none;
+}

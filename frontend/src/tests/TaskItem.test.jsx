@@ -58,5 +58,84 @@ describe('TaskItem component', () => {
     expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument();
   });
+
+  it('renders subtask badge and expands checklist when toggled', () => {
+    const taskWithSubtasks = {
+      ...sampleTask,
+      subtasks: [
+        { id: 'st-1', title: 'Draft OpenAPI spec', completed: true },
+        { id: 'st-2', title: 'Validate schema types', completed: false }
+      ]
+    };
+
+    render(<TaskItem task={taskWithSubtasks} onUpdate={vi.fn()} onDelete={vi.fn()} />);
+    
+    // Check subtask badge shows '1/2'
+    const subtaskBadge = screen.getByRole('button', { name: /toggle 2 subtasks/i });
+    expect(subtaskBadge).toBeInTheDocument();
+    expect(screen.getByText('1/2')).toBeInTheDocument();
+
+    // Checklist initially collapsed
+    expect(screen.queryByTestId('subtasks-container-42')).not.toBeInTheDocument();
+
+    // Click badge to expand
+    fireEvent.click(subtaskBadge);
+    expect(screen.getByTestId('subtasks-container-42')).toBeInTheDocument();
+    expect(screen.getByText('Draft OpenAPI spec')).toBeInTheDocument();
+    expect(screen.getByText('Validate schema types')).toBeInTheDocument();
+  });
+
+  it('toggles subtask completion and calls onUpdate', () => {
+    const handleUpdate = vi.fn();
+    const taskWithSubtasks = {
+      ...sampleTask,
+      subtasks: [
+        { id: 'st-1', title: 'Draft OpenAPI spec', completed: false }
+      ]
+    };
+
+    render(<TaskItem task={taskWithSubtasks} onUpdate={handleUpdate} onDelete={vi.fn()} />);
+
+    // Expand
+    fireEvent.click(screen.getByRole('button', { name: /toggle 1 subtasks/i }));
+
+    // Toggle subtask
+    const subtaskCheckbox = screen.getByRole('button', { name: /mark subtask Draft OpenAPI spec complete/i });
+    fireEvent.click(subtaskCheckbox);
+
+    expect(handleUpdate).toHaveBeenCalledWith(42, {
+      subtasks: [{ id: 'st-1', title: 'Draft OpenAPI spec', completed: true }]
+    });
+  });
+
+  it('adds a new subtask via inline input', () => {
+    const handleUpdate = vi.fn();
+    const taskWithSubtasks = {
+      ...sampleTask,
+      subtasks: []
+    };
+
+    render(<TaskItem task={taskWithSubtasks} onUpdate={handleUpdate} onDelete={vi.fn()} />);
+
+    // Click "Add checklist item" action button to open container
+    const addSubtaskBtn = screen.getByRole('button', { name: /add checklist item/i });
+    fireEvent.click(addSubtaskBtn);
+
+    const input = screen.getByPlaceholderText('+ Add subtask...');
+    fireEvent.change(input, { target: { value: 'Write unit tests' } });
+
+    const addBtn = screen.getByRole('button', { name: /^add$/i });
+    fireEvent.click(addBtn);
+
+    expect(handleUpdate).toHaveBeenCalledWith(42, {
+      subtasks: expect.arrayContaining([
+        expect.objectContaining({
+          title: 'Write unit tests',
+          completed: false
+        })
+      ])
+    });
+  });
 });
+
 

@@ -19,5 +19,20 @@ export const taskService = {
   deleteTask: async (taskId) => {
     const response = await api.delete(`/tasks/${taskId}`);
     return response.data;
+  },
+
+  addSubtask: async (taskId, subtaskData) => {
+    const response = await api.post(`/tasks/${taskId}/subtasks`, subtaskData);
+    return response.data;
+  },
+
+  updateSubtask: async (taskId, subtaskId, subtaskData) => {
+    const response = await api.put(`/tasks/${taskId}/subtasks/${subtaskId}`, subtaskData);
+    return response.data;
+  },
+
+  deleteSubtask: async (taskId, subtaskId) => {
+    const response = await api.delete(`/tasks/${taskId}/subtasks/${subtaskId}`);
+    return response.data;
   }
 };

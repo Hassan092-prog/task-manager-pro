@@ -47,6 +47,33 @@ describe('TaskList & Kanban Board component', () => {
     expect(screen.getByText('3 tasks')).toBeInTheDocument();
   });
 
+  it('renders subtask mini badge on board cards when task has subtasks', () => {
+    const tasksWithSubtasks = [
+      {
+        id: 1,
+        title: 'Board Task With Checklist',
+        priority: 'high',
+        status: 'todo',
+        completed: false,
+        subtasks: [
+          { id: 'st-1', title: 'Part A', completed: true },
+          { id: 'st-2', title: 'Part B', completed: false }
+        ]
+      }
+    ];
+
+    render(
+      <TaskList
+        tasks={tasksWithSubtasks}
+        onUpdateTask={vi.fn()}
+        onDeleteTask={vi.fn()}
+        viewMode="board"
+      />
+    );
+
+    expect(screen.getByText('1/2')).toBeInTheDocument();
+  });
+
   it('renders Kanban board with decoupled status columns', () => {
     render(
       <TaskList

@@ -13,7 +13,7 @@ import {
 } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import TaskItem from './TaskItem';
-import { IconInbox, IconClock, IconCheckCircle, IconTrash, IconEdit } from './Icons';
+import { IconInbox, IconClock, IconCheckCircle, IconTrash, IconEdit, IconListTodo } from './Icons';
 
 // Format relative due date helper
 const formatDue = (dateStr, completed) => {
@@ -61,6 +61,10 @@ export const BoardTaskCard = ({
   const [editStatus, setEditStatus] = useState(
     task.completed ? 'done' : (task.status || 'todo')
   );
+
+  const subtasks = Array.isArray(task.subtasks) ? task.subtasks : [];
+  const completedSubtasks = subtasks.filter(s => s.completed).length;
+  const totalSubtasks = subtasks.length;
 
   const due = formatDue(task.due_date, task.completed || task.status === 'done');
 
@@ -161,6 +165,15 @@ export const BoardTaskCard = ({
 
       <div className="board-task-bottom">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+          {totalSubtasks > 0 && (
+            <span
+              className={`subtask-mini-badge ${completedSubtasks === totalSubtasks ? 'all-done' : ''}`}
+              title={`${completedSubtasks} of ${totalSubtasks} subtasks completed`}
+            >
+              <IconListTodo size={11} />
+              <span>{completedSubtasks}/{totalSubtasks}</span>
+            </span>
+          )}
           {task.category && task.category !== 'General' && (
             <span className="tag-badge">{task.category}</span>
           )}

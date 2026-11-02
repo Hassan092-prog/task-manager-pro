@@ -86,8 +86,24 @@ const DailyCompanion = ({
     const urgentTasks = activeTasks.filter(t => t.priority === 'urgent' || t.priority === 'high');
 
     const totalTodayOrActive = dueTodayTasks.length;
-    const completionPercent = totalTodayOrActive > 0 
-      ? Math.round((completedTodayTasks.length / totalTodayOrActive) * 100) 
+    
+    // Subtask metric aggregation
+    let totalSubtasks = 0;
+    let completedSubtasks = 0;
+    tasks.forEach(t => {
+      if (Array.isArray(t.subtasks)) {
+        t.subtasks.forEach(s => {
+          totalSubtasks++;
+          if (s.completed) completedSubtasks++;
+        });
+      }
+    });
+
+    const totalDenominator = totalTodayOrActive + totalSubtasks;
+    const completedNumerator = completedTodayTasks.length + completedSubtasks;
+
+    const completionPercent = totalDenominator > 0 
+      ? Math.round((completedNumerator / totalDenominator) * 100) 
       : (completedTasks.length > 0 && activeTasks.length === 0 ? 100 : 0);
 
     // Project breakdown

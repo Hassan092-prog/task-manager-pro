@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { IconPlus, IconX, IconCalendar, IconTag, IconFlag } from './Icons';
+import { IconPlus, IconX, IconCalendar, IconTag, IconFlag, IconListTodo } from './Icons';
 
 const NewTaskModal = ({ 
   isOpen, 
@@ -13,6 +13,8 @@ const NewTaskModal = ({
   const [priority, setPriority] = useState('medium');
   const [category, setCategory] = useState(defaultCategory);
   const [dueDate, setDueDate] = useState('');
+  const [subtasks, setSubtasks] = useState([]);
+  const [subtaskInput, setSubtaskInput] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -27,6 +29,8 @@ const NewTaskModal = ({
       setPriority('medium');
       setCategory(defaultCategory);
       setDueDate('');
+      setSubtasks([]);
+      setSubtaskInput('');
       setError('');
       setTimeout(() => {
         titleInputRef.current?.focus();
@@ -67,6 +71,24 @@ const NewTaskModal = ({
     setDueDate(`${year}-${month}-${day}T18:00`);
   };
 
+  const handleAddSubtask = (e) => {
+    if (e) e.preventDefault();
+    if (!subtaskInput.trim()) return;
+    setSubtasks(prev => [
+      ...prev,
+      {
+        id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : 'sub_' + Date.now(),
+        title: subtaskInput.trim(),
+        completed: false
+      }
+    ]);
+    setSubtaskInput('');
+  };
+
+  const handleRemoveSubtask = (id) => {
+    setSubtasks(prev => prev.filter(s => s.id !== id));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title.trim()) {
@@ -85,6 +107,7 @@ const NewTaskModal = ({
         category,
         status,
         completed: status === 'done',
+        subtasks,
         due_date: dueDate ? new Date(dueDate).toISOString() : null
       });
       onClose();
@@ -156,6 +179,56 @@ const NewTaskModal = ({
                 className="modal-textarea"
                 rows={2}
               />
+            </div>
+
+            {/* Checklist / Subtasks Builder */}
+            <div className="modal-field">
+              <label className="modal-field-label">
+                <IconListTodo size={12} style={{ display: 'inline', marginRight: '4px' }} />
+                Checklist {subtasks.length > 0 && `(${subtasks.length})`}
+              </label>
+              {subtasks.length > 0 && (
+                <div className="modal-subtasks-list">
+                  {subtasks.map(s => (
+                    <div key={s.id} className="modal-subtask-item">
+                      <span className="modal-subtask-bullet">•</span>
+                      <span className="modal-subtask-title">{s.title}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveSubtask(s.id)}
+                        className="btn-icon-subtle btn-remove-subtask"
+                        title="Remove checklist item"
+                        aria-label="Remove checklist item"
+                      >
+                        <IconX size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="modal-subtask-input-row">
+                <input
+                  type="text"
+                  value={subtaskInput}
+                  onChange={(e) => setSubtaskInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddSubtask();
+                    }
+                  }}
+                  placeholder="+ Add checklist item (press Enter)..."
+                  className="modal-subtask-input"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddSubtask}
+                  disabled={!subtaskInput.trim()}
+                  className="btn-xs-action"
+                >
+                  Add
+                </button>
+              </div>
             </div>
 
             {/* Status Selector */}

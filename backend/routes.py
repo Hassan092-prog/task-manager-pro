@@ -1,7 +1,9 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import db, Task, User
-from datetime import datetime
+from sqlalchemy.orm.attributes import flag_modified
+from datetime import datetime, timezone
+import uuid
 
 tasks = Blueprint('tasks', __name__)
 
@@ -79,6 +81,18 @@ def create_task():
             completed = True
         elif completed:
             status = 'done'
+
+        # Clean & validate subtasks
+        raw_subtasks = data.get('subtasks', [])
+        clean_subtasks = []
+        if isinstance(raw_subtasks, list):
+            for s in raw_subtasks:
+                if isinstance(s, dict) and s.get('title', '').strip():
+                    clean_subtasks.append({
+                        'id': str(s.get('id', uuid.uuid4().hex[:8])),
+                        'title': s['title'].strip(),
+                        'completed': bool(s.get('completed', False))
+                    })
         
         task = Task(
             title=title,
@@ -87,6 +101,7 @@ def create_task():
             status=status,
             priority=priority,
             category=category,
+            subtasks=clean_subtasks,
             due_date=due_date,
             user_id=current_user_id
         )
@@ -150,6 +165,22 @@ def update_task(task_id):
                 task.category = new_cat
         if 'due_date' in data:
             task.due_date = datetime.fromisoformat(data['due_date'].replace('Z', '+00:00')) if data['due_date'] else None
+
+        if 'subtasks' in data:
+            raw_subtasks = data['subtasks']
+            clean_subtasks = []
+            if isinstance(raw_subtasks, list):
+                for s in raw_subtasks:
+                    if isinstance(s, dict) and s.get('title', '').strip():
+                        clean_subtasks.append({
+                            'id': str(s.get('id', uuid.uuid4().hex[:8])),
+                            'title': s['title'].strip(),
+                            'completed': bool(s.get('completed', False))
+                        })
+            task.subtasks = clean_subtasks
+            flag_modified(task, 'subtasks')
+
+        task.updated_at = datetime.now(timezone.utc)
         
         db.session.commit()
         
@@ -173,5 +204,102 @@ def delete_task(task_id):
         
         return jsonify({'message': 'Task deleted successfully'}), 200
     
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Dedicated Subtask REST Endpoints
+@tasks.route('/tasks/<int:task_id>/subtasks', methods=['POST'])
+@jwt_required()
+def add_subtask(task_id):
+    try:
+        current_user_id = int(get_jwt_identity())
+        task = Task.query.filter_by(id=task_id, user_id=current_user_id).first()
+        if not task:
+            return jsonify({'error': 'Task not found'}), 404
+        
+        data = request.get_json() or {}
+        title = data.get('title', '').strip()
+        if not title:
+            return jsonify({'error': 'Subtask title is required'}), 400
+        
+        current_subtasks = [dict(s) for s in task.to_dict().get('subtasks', [])]
+        new_subtask = {
+            'id': str(data.get('id', uuid.uuid4().hex[:8])),
+            'title': title,
+            'completed': bool(data.get('completed', False))
+        }
+        current_subtasks.append(new_subtask)
+        task.subtasks = current_subtasks
+        flag_modified(task, 'subtasks')
+        task.updated_at = datetime.now(timezone.utc)
+        
+        db.session.commit()
+        return jsonify({
+            'message': 'Subtask added successfully',
+            'task': task.to_dict(),
+            'subtask': new_subtask
+        }), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@tasks.route('/tasks/<int:task_id>/subtasks/<string:subtask_id>', methods=['PUT'])
+@jwt_required()
+def update_subtask(task_id, subtask_id):
+    try:
+        current_user_id = int(get_jwt_identity())
+        task = Task.query.filter_by(id=task_id, user_id=current_user_id).first()
+        if not task:
+            return jsonify({'error': 'Task not found'}), 404
+        
+        data = request.get_json() or {}
+        current_subtasks = [dict(s) for s in task.to_dict().get('subtasks', [])]
+        found = False
+        
+        for s in current_subtasks:
+            if str(s.get('id')) == str(subtask_id):
+                if 'title' in data and data['title'].strip():
+                    s['title'] = data['title'].strip()
+                if 'completed' in data:
+                    s['completed'] = bool(data['completed'])
+                found = True
+                break
+        
+        if not found:
+            return jsonify({'error': 'Subtask not found'}), 404
+            
+        task.subtasks = current_subtasks
+        flag_modified(task, 'subtasks')
+        task.updated_at = datetime.now(timezone.utc)
+        db.session.commit()
+        return jsonify({
+            'message': 'Subtask updated successfully',
+            'task': task.to_dict()
+        }), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@tasks.route('/tasks/<int:task_id>/subtasks/<string:subtask_id>', methods=['DELETE'])
+@jwt_required()
+def delete_subtask(task_id, subtask_id):
+    try:
+        current_user_id = int(get_jwt_identity())
+        task = Task.query.filter_by(id=task_id, user_id=current_user_id).first()
+        if not task:
+            return jsonify({'error': 'Task not found'}), 404
+        
+        current_subtasks = [dict(s) for s in task.to_dict().get('subtasks', [])]
+        next_subtasks = [s for s in current_subtasks if str(s.get('id')) != str(subtask_id)]
+        
+        if len(next_subtasks) == len(current_subtasks):
+            return jsonify({'error': 'Subtask not found'}), 404
+            
+        task.subtasks = next_subtasks
+        flag_modified(task, 'subtasks')
+        task.updated_at = datetime.now(timezone.utc)
+        db.session.commit()
+        return jsonify({
+            'message': 'Subtask deleted successfully',
+            'task': task.to_dict()
+        }), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500

@@ -35,8 +35,14 @@ def create_app():
                         conn.execute(text("ALTER TABLE task ADD COLUMN category VARCHAR(50) DEFAULT 'General';"))
                     if 'status' not in existing_cols:
                         conn.execute(text("ALTER TABLE task ADD COLUMN status VARCHAR(20) DEFAULT 'todo';"))
+                    if 'subtasks' not in existing_cols:
+                        conn.execute(text("ALTER TABLE task ADD COLUMN subtasks TEXT DEFAULT '[]';"))
+                    if 'updated_at' not in existing_cols:
+                        conn.execute(text("ALTER TABLE task ADD COLUMN updated_at DATETIME;"))
                     conn.execute(text("UPDATE task SET status = 'done' WHERE completed = 1 AND (status IS NULL OR status = 'todo');"))
                     conn.execute(text("UPDATE task SET status = 'todo' WHERE status IS NULL;"))
+                    conn.execute(text("UPDATE task SET subtasks = '[]' WHERE subtasks IS NULL;"))
+                    conn.execute(text("UPDATE task SET updated_at = created_at WHERE updated_at IS NULL;"))
                     conn.commit()
         except Exception:
             pass  # Non-SQLite or already migrated
@@ -192,7 +198,7 @@ def create_app():
                 <span>⚡</span> Task Manager Pro <span style="font-weight:400; color:var(--text-secondary); font-size:1rem;">API</span>
             </div>
             <div class="badge">
-                <span class="pulse"></span> Operational v1.3
+                <span class="pulse"></span> Operational v1.4
             </div>
         </div>
         <p class="desc">High-performance REST API service powering Task Manager Pro. Authenticated with JWT, hardened with Bcrypt security, and ready for high-throughput client requests.</p>
@@ -223,6 +229,10 @@ def create_app():
                 <span><span class="method put">PUT</span> <span class="method del">DEL</span> /api/tasks/&lt;id&gt;</span>
                 <span style="color:var(--text-secondary); font-size:0.75rem;">Mutation & Delete</span>
             </div>
+            <div class="endpoint-row">
+                <span><span class="method post">POST</span> <span class="method put">PUT</span> <span class="method del">DEL</span> /api/tasks/&lt;id&gt;/subtasks</span>
+                <span style="color:var(--text-secondary); font-size:0.75rem;">Subtasks Checklist</span>
+            </div>
         </div>
 
         <div class="footer">
@@ -236,7 +246,7 @@ def create_app():
         return jsonify({
             'service': 'Task Manager Pro API',
             'status': 'operational',
-            'version': '1.3.0',
+            'version': '1.4.0',
             'documentation': 'https://github.com/786Hassan92/task-manager-pro',
             'endpoints': {
                 'auth_register': 'POST /api/auth/register',
@@ -245,7 +255,10 @@ def create_app():
                 'tasks_list': 'GET /api/tasks',
                 'tasks_create': 'POST /api/tasks',
                 'tasks_update': 'PUT /api/tasks/<id>',
-                'tasks_delete': 'DELETE /api/tasks/<id>'
+                'tasks_delete': 'DELETE /api/tasks/<id>',
+                'subtasks_create': 'POST /api/tasks/<id>/subtasks',
+                'subtasks_update': 'PUT /api/tasks/<id>/subtasks/<subtask_id>',
+                'subtasks_delete': 'DELETE /api/tasks/<id>/subtasks/<subtask_id>'
             }
         }), 200
 
