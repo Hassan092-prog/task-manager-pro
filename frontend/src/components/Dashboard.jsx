@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { taskService } from '../services/tasks';
 import { authService } from '../services/auth';
 import TaskList from './TaskList';
@@ -30,10 +31,33 @@ const Dashboard = ({ onLogout }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
-  // Active Navigation View ('inbox', 'today', 'upcoming', 'completed', or tag name)
-  const [activeNav, setActiveNav] = useState('inbox');
-  const [viewMode, setViewMode] = useState('list'); // 'list' | 'board'
-  const [searchQuery, setSearchQuery] = useState('');
+  const { section, projectTag } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  // Active Navigation View ('inbox', 'today', 'upcoming', 'completed', or tag name) derived from URL
+  const activeNav = useMemo(() => {
+    if (projectTag) return `tag:${projectTag}`;
+    if (section && ['inbox', 'today', 'upcoming', 'completed'].includes(section)) {
+      return section;
+    }
+    return 'inbox';
+  }, [section, projectTag]);
+
+  // View Mode: board if on /app/board or ?view=board
+  const viewMode = (section === 'board' || searchParams.get('view') === 'board') ? 'board' : 'list';
+
+  // Search Query synchronized with URL search params
+  const searchQuery = searchParams.get('q') || '';
+  const setSearchQuery = (newQuery) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (newQuery) next.set('q', newQuery);
+      else next.delete('q');
+      return next;
+    }, { replace: true });
+  };
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Daily Companion Panel & Filtering State (default open on >= 1140px, off-canvas on mobile/tablet)
@@ -43,8 +67,62 @@ const Dashboard = ({ onLogout }) => {
     }
     return true;
   });
-  const [selectedDateFilter, setSelectedDateFilter] = useState(null);
-  const [activeFilterPill, setActiveFilterPill] = useState('all');
+
+  // Date Filter & Filter Pills synchronized with URL search params
+  const selectedDateFilter = searchParams.get('date') || null;
+  const setSelectedDateFilter = (newDate) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (newDate) next.set('date', newDate);
+      else next.delete('date');
+      return next;
+    }, { replace: true });
+  };
+
+  const activeFilterPill = searchParams.get('filter') || 'all';
+  const setActiveFilterPill = (newPill) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (newPill && newPill !== 'all') next.set('filter', newPill);
+      else next.delete('filter');
+      return next;
+    }, { replace: true });
+  };
+
+  // Declarative navigation handlers
+  const handleNavigate = (targetNav) => {
+    setIsMobileMenuOpen(false);
+    const searchString = searchParams.toString() ? `?${searchParams.toString()}` : '';
+    if (targetNav.startsWith('tag:')) {
+      const tag = targetNav.replace('tag:', '');
+      navigate(`/app/project/${encodeURIComponent(tag)}${searchString}`);
+    } else {
+      navigate(`/app/${targetNav}${searchString}`);
+    }
+  };
+
+  const handleSetViewMode = (mode) => {
+    const search = new URLSearchParams(searchParams);
+    if (mode === 'board') {
+      search.delete('view');
+      const searchStr = search.toString() ? `?${search.toString()}` : '';
+      navigate(`/app/board${searchStr}`);
+    } else {
+      if (section === 'board') {
+        const searchStr = search.toString() ? `?${search.toString()}` : '';
+        navigate(`/app/inbox${searchStr}`);
+      } else {
+        search.delete('view');
+        setSearchParams(search);
+      }
+    }
+  };
+
+  const handleLogout = () => {
+    authService.logout();
+    if (onLogout) onLogout();
+    navigate('/login', { replace: true });
+  };
 
   // Lightweight Avatar Profile Popover State
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -394,7 +472,7 @@ const Dashboard = ({ onLogout }) => {
             <button
               type="button"
               className={`nav-item ${activeNav === 'inbox' ? 'active' : ''}`}
-              onClick={() => { setActiveNav('inbox'); setIsMobileMenuOpen(false); }}
+              onClick={() => handleNavigate('inbox')}
             >
               <span className="nav-item-left">
                 <IconInbox size={15} />
@@ -406,7 +484,7 @@ const Dashboard = ({ onLogout }) => {
             <button
               type="button"
               className={`nav-item ${activeNav === 'today' ? 'active' : ''}`}
-              onClick={() => { setActiveNav('today'); setIsMobileMenuOpen(false); }}
+              onClick={() => handleNavigate('today')}
             >
               <span className="nav-item-left">
                 <IconCalendar size={15} />
@@ -418,7 +496,7 @@ const Dashboard = ({ onLogout }) => {
             <button
               type="button"
               className={`nav-item ${activeNav === 'upcoming' ? 'active' : ''}`}
-              onClick={() => { setActiveNav('upcoming'); setIsMobileMenuOpen(false); }}
+              onClick={() => handleNavigate('upcoming')}
             >
               <span className="nav-item-left">
                 <IconClock size={15} />
@@ -430,7 +508,7 @@ const Dashboard = ({ onLogout }) => {
             <button
               type="button"
               className={`nav-item ${activeNav === 'completed' ? 'active' : ''}`}
-              onClick={() => { setActiveNav('completed'); setIsMobileMenuOpen(false); }}
+              onClick={() => handleNavigate('completed')}
             >
               <span className="nav-item-left">
                 <IconCheckCircle size={15} />
@@ -452,7 +530,7 @@ const Dashboard = ({ onLogout }) => {
                 key={proj.id}
                 type="button"
                 className={`nav-item ${activeNav === proj.id ? 'active' : ''}`}
-                onClick={() => { setActiveNav(proj.id); setIsMobileMenuOpen(false); }}
+                onClick={() => handleNavigate(proj.id)}
               >
                 <span className="nav-item-left">
                   <span className="tag-dot" style={{ backgroundColor: proj.color }} />
@@ -487,7 +565,7 @@ const Dashboard = ({ onLogout }) => {
             </button>
             <button
               type="button"
-              onClick={onLogout}
+              onClick={handleLogout}
               className="btn-icon-subtle"
               title="Sign out"
               aria-label="Sign out"
@@ -557,7 +635,7 @@ const Dashboard = ({ onLogout }) => {
               <button 
                 type="button" 
                 className="popover-menu-item"
-                onClick={onLogout}
+                onClick={handleLogout}
               >
                 <IconLogOut size={13} />
                 <span>Sign Out</span>
@@ -602,7 +680,7 @@ const Dashboard = ({ onLogout }) => {
               <button
                 type="button"
                 className={`segment-btn ${viewMode === 'list' ? 'active' : ''}`}
-                onClick={() => setViewMode('list')}
+                onClick={() => handleSetViewMode('list')}
                 title="List View"
               >
                 <IconLayoutList size={13} />
@@ -611,7 +689,7 @@ const Dashboard = ({ onLogout }) => {
               <button
                 type="button"
                 className={`segment-btn ${viewMode === 'board' ? 'active' : ''}`}
-                onClick={() => setViewMode('board')}
+                onClick={() => handleSetViewMode('board')}
                 title="Kanban Board View"
               >
                 <IconLayoutGrid size={13} />
@@ -790,7 +868,7 @@ const Dashboard = ({ onLogout }) => {
                     key={nav.id}
                     type="button"
                     className={`mobile-nav-chip ${activeNav === nav.id ? 'active' : ''}`}
-                    onClick={() => setActiveNav(nav.id)}
+                    onClick={() => handleNavigate(nav.id)}
                   >
                     {nav.icon && <span className="mobile-nav-chip-icon">{nav.icon}</span>}
                     {nav.dot && <span className="tag-dot" style={{ backgroundColor: nav.dot }} />}

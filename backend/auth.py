@@ -67,7 +67,7 @@ def protected():
     try:
         current_user_id = get_jwt_identity()
         # Convert back to integer for database query
-        user = User.query.get(int(current_user_id))
+        user = db.session.get(User, int(current_user_id))
         if user:
             return jsonify({'message': f'Hello {user.username}!', 'user': user.to_dict()})
         else:

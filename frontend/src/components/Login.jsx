@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { authService } from '../services/auth';
 
 const Login = ({ onLogin, switchToRegister }) => {
@@ -8,6 +9,8 @@ const Login = ({ onLogin, switchToRegister }) => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const handleChange = (e) => {
     setFormData({
@@ -25,7 +28,9 @@ const Login = ({ onLogin, switchToRegister }) => {
       const result = await authService.login(formData);
       localStorage.setItem('access_token', result.access_token);
       localStorage.setItem('user', JSON.stringify(result.user));
-      onLogin(result.user);
+      if (onLogin) onLogin(result.user);
+      const destination = location.state?.from?.pathname || '/app/inbox';
+      navigate(destination, { replace: true });
     } catch (err) {
       setError(err.response?.data?.error || 'Invalid credentials.');
     } finally {
@@ -82,9 +87,15 @@ const Login = ({ onLogin, switchToRegister }) => {
 
         <p className="auth-switch-text">
           No account yet?
-          <button type="button" onClick={switchToRegister} className="auth-switch-btn">
-            Register
-          </button>
+          {switchToRegister ? (
+            <button type="button" onClick={switchToRegister} className="auth-switch-btn">
+              Register
+            </button>
+          ) : (
+            <Link to="/register" className="auth-switch-btn" style={{ textDecoration: 'none' }}>
+              Register
+            </Link>
+          )}
         </p>
       </div>
     </div>

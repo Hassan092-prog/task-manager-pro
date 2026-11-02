@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/auth';
 
 const Register = ({ onRegister, switchToLogin }) => {
@@ -10,6 +11,7 @@ const Register = ({ onRegister, switchToLogin }) => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({
@@ -40,7 +42,8 @@ const Register = ({ onRegister, switchToLogin }) => {
       const result = await authService.register(registerData);
       localStorage.setItem('access_token', result.access_token);
       localStorage.setItem('user', JSON.stringify(result.user));
-      onRegister(result.user);
+      if (onRegister) onRegister(result.user);
+      navigate('/app/inbox', { replace: true });
     } catch (err) {
       setError(err.response?.data?.error || 'Registration failed.');
     } finally {
@@ -123,9 +126,15 @@ const Register = ({ onRegister, switchToLogin }) => {
 
         <p className="auth-switch-text">
           Already have an account?
-          <button type="button" onClick={switchToLogin} className="auth-switch-btn">
-            Sign in
-          </button>
+          {switchToLogin ? (
+            <button type="button" onClick={switchToLogin} className="auth-switch-btn">
+              Sign in
+            </button>
+          ) : (
+            <Link to="/login" className="auth-switch-btn" style={{ textDecoration: 'none' }}>
+              Sign in
+            </Link>
+          )}
         </p>
       </div>
     </div>

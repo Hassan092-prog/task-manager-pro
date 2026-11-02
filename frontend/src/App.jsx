@@ -1,41 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/Login';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
-import { authService } from './services/auth';
+import ProtectedRoute from './components/ProtectedRoute';
+import GuestRoute from './components/GuestRoute';
 import './App.css';
 
 function App() {
-  const [currentView, setCurrentView] = useState('login');
-  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Sync theme on initial boot
     const savedTheme = localStorage.getItem('theme') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
-
-    // Check if user session is active
-    const currentUser = authService.getCurrentUser();
-    if (currentUser && authService.isAuthenticated()) {
-      setUser(currentUser);
-    }
     setLoading(false);
   }, []);
-
-  const handleLogin = (userData) => {
-    setUser(userData);
-  };
-
-  const handleRegister = (userData) => {
-    setUser(userData);
-  };
-
-  const handleLogout = () => {
-    authService.logout();
-    setUser(null);
-    setCurrentView('login');
-  };
 
   if (loading) {
     return (
@@ -46,23 +26,55 @@ function App() {
   }
 
   return (
-    <>
-      {!user ? (
-        currentView === 'login' ? (
-          <Login 
-            onLogin={handleLogin} 
-            switchToRegister={() => setCurrentView('register')} 
-          />
-        ) : (
-          <Register 
-            onRegister={handleRegister} 
-            switchToLogin={() => setCurrentView('login')} 
-          />
-        )
-      ) : (
-        <Dashboard onLogout={handleLogout} />
-      )}
-    </>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Navigate to="/app/inbox" replace />} />
+        
+        <Route 
+          path="/login" 
+          element={
+            <GuestRoute>
+              <Login />
+            </GuestRoute>
+          } 
+        />
+        
+        <Route 
+          path="/register" 
+          element={
+            <GuestRoute>
+              <Register />
+            </GuestRoute>
+          } 
+        />
+
+        <Route 
+          path="/app" 
+          element={<Navigate to="/app/inbox" replace />} 
+        />
+
+        <Route 
+          path="/app/:section" 
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/app/project/:projectTag" 
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* Catch-all fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
