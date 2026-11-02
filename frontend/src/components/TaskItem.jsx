@@ -82,6 +82,9 @@ const TaskItem = ({ task, onUpdate, onDelete }) => {
         <>
           <div className="task-row-main">
             <span className="task-row-title">{task.title}</span>
+            {task.description && (
+              <span className="task-row-desc">{task.description}</span>
+            )}
           </div>
 
           <div className="task-row-meta">

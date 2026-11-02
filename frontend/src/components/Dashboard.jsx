@@ -3,6 +3,7 @@ import { taskService } from '../services/tasks';
 import { authService } from '../services/auth';
 import TaskList from './TaskList';
 import DailyCompanion from './DailyCompanion';
+import NewTaskModal from './NewTaskModal';
 import { 
   IconInbox, 
   IconCalendar, 
@@ -49,12 +50,13 @@ const Dashboard = ({ onLogout }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profilePopoverRef = useRef(null);
 
-  // Quick Task Creation Inline State
+  // Quick Task Creation Inline & Modal State
   const [newTitle, setNewTitle] = useState('');
   const [newPriority, setNewPriority] = useState('medium');
   const [newCategory, setNewCategory] = useState('Work');
   const [newDueDate, setNewDueDate] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
   // Theme Engine
   const [theme, setTheme] = useState(() => {
@@ -111,7 +113,11 @@ const Dashboard = ({ onLogout }) => {
 
       if (e.key === 'n' || e.key === 'N') {
         e.preventDefault();
-        quickInputRef.current?.focus();
+        if (window.innerWidth <= 768) {
+          setIsTaskModalOpen(true);
+        } else {
+          quickInputRef.current?.focus();
+        }
       } else if (e.key === '/' || (e.ctrlKey && e.key === 'k') || (e.metaKey && e.key === 'k')) {
         e.preventDefault();
         searchInputRef.current?.focus();
@@ -157,6 +163,12 @@ const Dashboard = ({ onLogout }) => {
     } finally {
       setIsCreating(false);
     }
+  };
+
+  const handleModalCreateTask = async (taskPayload) => {
+    const result = await taskService.createTask(taskPayload);
+    setTasks(prev => [result.task, ...prev]);
+    return result;
   };
 
   const handleUpdateTask = async (taskId, updateData) => {
@@ -575,7 +587,7 @@ const Dashboard = ({ onLogout }) => {
           </div>
 
           <div className="topbar-controls">
-            <div className="search-wrapper">
+            <div className="search-wrapper desktop-only-search">
               <IconSearch size={14} />
               <input
                 ref={searchInputRef}
@@ -661,8 +673,8 @@ const Dashboard = ({ onLogout }) => {
               </div>
             )}
 
-            {/* Frictionless Inline Quick-Add Task Input */}
-            <form onSubmit={handleQuickCreate} className="quick-add-container">
+            {/* Frictionless Inline Quick-Add Task Input (Desktop Only) */}
+            <form onSubmit={handleQuickCreate} className="quick-add-container desktop-only-quick-add">
               <div className="quick-add-main-row">
                 <IconPlus size={16} />
                 <input
@@ -740,6 +752,58 @@ const Dashboard = ({ onLogout }) => {
               )}
             </form>
 
+            {/* Mobile Navigation & Full-Width Search Bar (Replaces top add bar on small screens) */}
+            <div className="mobile-search-nav-container">
+              <div className="mobile-search-bar">
+                <IconSearch size={15} className="mobile-search-icon" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search tasks..."
+                  className="mobile-search-input"
+                />
+                {searchQuery && (
+                  <button 
+                    type="button" 
+                    onClick={() => setSearchQuery('')}
+                    className="mobile-search-clear"
+                    aria-label="Clear search"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* Horizontal Scrollable View & Project Switcher */}
+              <div className="mobile-nav-chips-bar">
+                {[
+                  { id: 'inbox', label: 'Inbox', count: counts.inbox, icon: <IconInbox size={12} /> },
+                  { id: 'today', label: 'Today', count: counts.today, icon: <IconCalendar size={12} /> },
+                  { id: 'upcoming', label: 'Upcoming', count: counts.upcoming, icon: <IconClock size={12} /> },
+                  { id: 'completed', label: 'Done', count: counts.completed, icon: <IconCheckCircle size={12} /> },
+                  { id: 'tag:Work', label: 'Work', dot: '#3b82f6' },
+                  { id: 'tag:Personal', label: 'Personal', dot: '#10b981' },
+                  { id: 'tag:Engineering', label: 'Engineering', dot: '#8b5cf6' },
+                  { id: 'tag:Design', label: 'Design', dot: '#f59e0b' }
+                ].map(nav => (
+                  <button
+                    key={nav.id}
+                    type="button"
+                    className={`mobile-nav-chip ${activeNav === nav.id ? 'active' : ''}`}
+                    onClick={() => setActiveNav(nav.id)}
+                  >
+                    {nav.icon && <span className="mobile-nav-chip-icon">{nav.icon}</span>}
+                    {nav.dot && <span className="tag-dot" style={{ backgroundColor: nav.dot }} />}
+                    <span>{nav.label}</span>
+                    {typeof nav.count === 'number' && (
+                      <span className="mobile-nav-chip-count">{nav.count}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Quick Filter Strip (1-Click Slicing) */}
             <div className="quick-filter-strip">
               {[
@@ -797,6 +861,25 @@ const Dashboard = ({ onLogout }) => {
           )}
         </div>
       </div>
+
+      {/* Floating Action Button (Hovering button on bottom right for phone and smaller screens) */}
+      <button
+        type="button"
+        onClick={() => setIsTaskModalOpen(true)}
+        className="mobile-fab-btn"
+        title="Add new task"
+        aria-label="Add new task"
+      >
+        <IconPlus size={24} />
+      </button>
+
+      {/* New Task Popup Modal Window */}
+      <NewTaskModal
+        isOpen={isTaskModalOpen}
+        onClose={() => setIsTaskModalOpen(false)}
+        onSubmit={handleModalCreateTask}
+        defaultCategory={activeNav.startsWith('tag:') ? activeNav.replace('tag:', '') : 'Work'}
+      />
     </div>
   );
 };
