@@ -35,7 +35,8 @@ def create_app():
                         conn.execute(text("ALTER TABLE task ADD COLUMN category VARCHAR(50) DEFAULT 'General';"))
                     if 'status' not in existing_cols:
                         conn.execute(text("ALTER TABLE task ADD COLUMN status VARCHAR(20) DEFAULT 'todo';"))
-                        conn.execute(text("UPDATE task SET status = 'done' WHERE completed = 1;"))
+                    conn.execute(text("UPDATE task SET status = 'done' WHERE completed = 1 AND (status IS NULL OR status = 'todo');"))
+                    conn.execute(text("UPDATE task SET status = 'todo' WHERE status IS NULL;"))
                     conn.commit()
         except Exception:
             pass  # Non-SQLite or already migrated

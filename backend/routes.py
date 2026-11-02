@@ -118,21 +118,27 @@ def update_task(task_id):
         if 'description' in data:
             task.description = data['description']
             
-        # Dual-sync status & completed
-        if 'status' in data:
+        # Dual-sync status & completed with strict reconciliation
+        if 'status' in data and 'completed' in data:
             new_status = (data['status'] or '').lower().strip()
             if new_status in ['todo', 'in_progress', 'done']:
                 task.status = new_status
                 task.completed = (new_status == 'done')
-                
-        if 'completed' in data:
+            else:
+                task.completed = bool(data['completed'])
+                task.status = 'done' if task.completed else 'todo'
+        elif 'status' in data:
+            new_status = (data['status'] or '').lower().strip()
+            if new_status in ['todo', 'in_progress', 'done']:
+                task.status = new_status
+                task.completed = (new_status == 'done')
+        elif 'completed' in data:
             is_comp = bool(data['completed'])
             task.completed = is_comp
-            if 'status' not in data:
-                if is_comp:
-                    task.status = 'done'
-                elif task.status == 'done':
-                    task.status = 'todo'
+            if is_comp:
+                task.status = 'done'
+            elif task.status == 'done':
+                task.status = 'todo'
 
         if 'priority' in data:
             new_prio = data['priority'].lower()

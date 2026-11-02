@@ -8,11 +8,40 @@ import {
   TouchSensor,
   useSensor,
   useSensors,
+  pointerWithin,
   rectIntersection
 } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import TaskItem from './TaskItem';
 import { IconInbox, IconClock, IconCheckCircle, IconTrash, IconEdit } from './Icons';
+
+// Format relative due date helper
+const formatDue = (dateStr, completed) => {
+  if (!dateStr) return null;
+  const due = new Date(dateStr);
+  const now = new Date();
+  const isPast = due < now;
+  const isToday = due.toDateString() === now.toDateString();
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const isTomorrow = due.toDateString() === tomorrow.toDateString();
+
+  const dateFormatted = due.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+
+  if (completed) {
+    return { text: dateFormatted, className: 'date-indicator' };
+  }
+  if (isPast && !isToday) {
+    return { text: `Overdue (${dateFormatted})`, className: 'date-indicator overdue' };
+  }
+  if (isToday) {
+    return { text: 'Today', className: 'date-indicator today' };
+  }
+  if (isTomorrow) {
+    return { text: 'Tomorrow', className: 'date-indicator' };
+  }
+  return { text: dateFormatted, className: 'date-indicator' };
+};
 
 export const BoardTaskCard = ({
   task,
@@ -32,6 +61,8 @@ export const BoardTaskCard = ({
   const [editStatus, setEditStatus] = useState(
     task.completed ? 'done' : (task.status || 'todo')
   );
+
+  const due = formatDue(task.due_date, task.completed || task.status === 'done');
 
   const startEditing = () => {
     setEditTitle(task.title);
@@ -120,13 +151,24 @@ export const BoardTaskCard = ({
             </svg>
           )}
         </button>
-        <span className="board-task-title">{task.title}</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', flex: 1, minWidth: 0 }}>
+          <span className="board-task-title">{task.title}</span>
+          {task.description && (
+            <span className="board-task-desc">{task.description}</span>
+          )}
+        </div>
       </div>
 
       <div className="board-task-bottom">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
           {task.category && task.category !== 'General' && (
             <span className="tag-badge">{task.category}</span>
+          )}
+          {due && (
+            <span className={due.className}>
+              <IconClock size={11} />
+              {due.text}
+            </span>
           )}
           <span className={`prio-dot-indicator prio-dot-${task.priority || 'medium'}`} />
         </div>
@@ -199,7 +241,11 @@ const BoardColumn = ({ col, onUpdateTask, onDeleteTask }) => {
   });
 
   return (
-    <div className={`board-column ${isOver ? 'is-over' : ''}`}>
+    <div
+      ref={setNodeRef}
+      className={`board-column ${isOver ? 'is-over' : ''}`}
+      data-testid={`board-col-${col.id}`}
+    >
       <div className="board-col-head">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
           <span className={`board-col-status-dot status-dot-${col.id}`} />
@@ -207,7 +253,7 @@ const BoardColumn = ({ col, onUpdateTask, onDeleteTask }) => {
         </div>
         <span style={{ fontFamily: 'JetBrains Mono, monospace' }}>{col.count}</span>
       </div>
-      <div ref={setNodeRef} className="board-col-tasks" data-testid={`board-col-${col.id}`}>
+      <div className="board-col-tasks">
         {col.items.length === 0 ? (
           <div className="board-col-empty">
             {col.emptyText}
@@ -244,6 +290,15 @@ const TaskList = ({ tasks, onUpdateTask, onDeleteTask, viewMode = 'list', active
   });
 
   const sensors = useSensors(pointerSensor, touchSensor);
+
+  // Custom collision detection: prefer pointer location, fallback to bounding rect intersection
+  const customCollisionDetection = (args) => {
+    const pointerCollisions = pointerWithin(args);
+    if (pointerCollisions.length > 0) {
+      return pointerCollisions;
+    }
+    return rectIntersection(args);
+  };
 
   const handleDragStart = (event) => {
     const { active } = event;
@@ -359,9 +414,9 @@ const TaskList = ({ tasks, onUpdateTask, onDeleteTask, viewMode = 'list', active
 
   // Kanban Board View Mode
   if (viewMode === 'board') {
-    const todoTasks = tasks.filter(t => !t.completed && (t.status === 'todo' || !t.status));
-    const inProgressTasks = tasks.filter(t => !t.completed && t.status === 'in_progress');
     const doneTasks = tasks.filter(t => t.completed || t.status === 'done');
+    const inProgressTasks = tasks.filter(t => !doneTasks.includes(t) && t.status === 'in_progress');
+    const todoTasks = tasks.filter(t => !doneTasks.includes(t) && !inProgressTasks.includes(t));
 
     const columns = [
       { id: 'todo', title: 'To Do', count: todoTasks.length, items: todoTasks, emptyText: 'No tasks to do' },
@@ -372,7 +427,7 @@ const TaskList = ({ tasks, onUpdateTask, onDeleteTask, viewMode = 'list', active
     return (
       <DndContext
         sensors={sensors}
-        collisionDetection={rectIntersection}
+        collisionDetection={customCollisionDetection}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}

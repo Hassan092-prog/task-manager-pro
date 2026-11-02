@@ -137,6 +137,16 @@ def test_task_status_decoupling_and_sync(client, register_and_login):
     assert in_prog['status'] == 'in_progress'
     assert in_prog['completed'] is False
 
+    # 5. Conflicting payload: status='todo' and completed=True -> status takes precedence, completed reconciled to False
+    conflict_res = client.put(f'/api/tasks/{task_id}', headers=headers, json={
+        'status': 'todo',
+        'completed': True
+    })
+    assert conflict_res.status_code == 200
+    reconciled = conflict_res.get_json()['task']
+    assert reconciled['status'] == 'todo'
+    assert reconciled['completed'] is False
+
 def test_task_status_filtering(client, register_and_login):
     headers = register_and_login(username='statusfilteruser', email='statusfilter@example.com')
 

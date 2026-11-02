@@ -253,7 +253,17 @@ const Dashboard = ({ onLogout }) => {
 
   const handleUpdateTask = async (taskId, updateData) => {
     try {
-      setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...updateData } : t));
+      setTasks(prev => prev.map(t => {
+        if (t.id !== taskId) return t;
+        const next = { ...t, ...updateData };
+        if ('status' in updateData && !('completed' in updateData)) {
+          next.completed = (updateData.status === 'done');
+        } else if ('completed' in updateData && !('status' in updateData)) {
+          if (updateData.completed) next.status = 'done';
+          else if (t.status === 'done') next.status = 'todo';
+        }
+        return next;
+      }));
       const result = await taskService.updateTask(taskId, updateData);
       setTasks(prev => prev.map(t => t.id === taskId ? result.task : t));
     } catch (err) {
@@ -352,7 +362,7 @@ const Dashboard = ({ onLogout }) => {
       }
     });
 
-    return { inbox: inboxCount, today: todayCount, upcoming: upcomingCount, completed: completedCount };
+    return { inbox: inboxCount, today: todayCount, upcoming: upcomingCount, completed: completedCount, board: tasks.length };
   }, [tasks]);
 
   // Filter Tasks based on Active Nav, Date Filter, Filter Pill, & Search
@@ -370,21 +380,33 @@ const Dashboard = ({ onLogout }) => {
       }
 
       // Nav View
-      if (activeNav === 'inbox') {
-        if (task.completed) return false;
-      } else if (activeNav === 'today') {
-        if (task.completed || !task.due_date) return false;
-        if (new Date(task.due_date).toDateString() !== todayStr) return false;
-      } else if (activeNav === 'upcoming') {
-        if (task.completed || !task.due_date) return false;
-        if (new Date(task.due_date) <= now || new Date(task.due_date).toDateString() === todayStr) return false;
-      } else if (activeNav === 'completed') {
-        if (!task.completed) return false;
-      } else if (activeNav.startsWith('tag:')) {
-        const tagName = activeNav.replace('tag:', '');
-        if (task.completed || (task.category || 'General').toLowerCase() !== tagName.toLowerCase()) return false;
-      } else if (activeNav === 'board') {
-        // Board view displays all workflow stages across columns (To Do, In Progress, Done)
+      if (viewMode === 'board') {
+        if (activeNav.startsWith('tag:')) {
+          const tagName = activeNav.replace('tag:', '');
+          if ((task.category || 'General').toLowerCase() !== tagName.toLowerCase()) return false;
+        } else if (activeNav === 'today') {
+          if (!task.due_date || new Date(task.due_date).toDateString() !== todayStr) return false;
+        } else if (activeNav === 'upcoming') {
+          if (!task.due_date || new Date(task.due_date) <= now || new Date(task.due_date).toDateString() === todayStr) return false;
+        } else if (activeNav === 'completed') {
+          if (!task.completed && task.status !== 'done') return false;
+        }
+        // for 'inbox' and 'board', all tasks across workflow stages are shown
+      } else {
+        if (activeNav === 'inbox') {
+          if (task.completed) return false;
+        } else if (activeNav === 'today') {
+          if (task.completed || !task.due_date) return false;
+          if (new Date(task.due_date).toDateString() !== todayStr) return false;
+        } else if (activeNav === 'upcoming') {
+          if (task.completed || !task.due_date) return false;
+          if (new Date(task.due_date) <= now || new Date(task.due_date).toDateString() === todayStr) return false;
+        } else if (activeNav === 'completed') {
+          if (!task.completed) return false;
+        } else if (activeNav.startsWith('tag:')) {
+          const tagName = activeNav.replace('tag:', '');
+          if (task.completed || (task.category || 'General').toLowerCase() !== tagName.toLowerCase()) return false;
+        }
       }
 
       // Date Filter from Companion Week Strip
@@ -409,7 +431,7 @@ const Dashboard = ({ onLogout }) => {
 
       return true;
     });
-  }, [tasks, activeNav, searchQuery, selectedDateFilter, activeFilterPill]);
+  }, [tasks, activeNav, viewMode, searchQuery, selectedDateFilter, activeFilterPill]);
 
   // Heading text
   const getNavTitle = () => {
@@ -507,6 +529,18 @@ const Dashboard = ({ onLogout }) => {
                 Upcoming
               </span>
               <span className="nav-count">{counts.upcoming}</span>
+            </button>
+
+            <button
+              type="button"
+              className={`nav-item ${activeNav === 'board' ? 'active' : ''}`}
+              onClick={() => handleNavigate('board')}
+            >
+              <span className="nav-item-left">
+                <IconLayoutGrid size={15} />
+                Board
+              </span>
+              <span className="nav-count">{counts.board}</span>
             </button>
 
             <button
