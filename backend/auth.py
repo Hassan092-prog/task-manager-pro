@@ -10,19 +10,25 @@ bcrypt = Bcrypt()
 @auth.route('/register', methods=['POST'])
 def register():
     try:
-        data = request.get_json()
+        data = request.get_json() or {}
+        username = (data.get('username') or '').strip()
+        email = (data.get('email') or '').strip().lower()
+        password = data.get('password')
+
+        if not username or not email or not password:
+            return jsonify({'error': 'Username, email, and password are required'}), 400
         
         # Check if user already exists
-        if User.query.filter_by(email=data.get('email')).first():
+        if User.query.filter_by(email=email).first():
             return jsonify({'error': 'Email already registered'}), 400
-        if User.query.filter_by(username=data.get('username')).first():
+        if User.query.filter_by(username=username).first():
             return jsonify({'error': 'Username already taken'}), 400
 
         # Create new user
-        hashed_password = bcrypt.generate_password_hash(data.get('password')).decode('utf-8')
+        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
         user = User(
-            username=data.get('username'),
-            email=data.get('email'),
+            username=username,
+            email=email,
             password=hashed_password
         )
         
@@ -44,10 +50,16 @@ def register():
 @auth.route('/login', methods=['POST'])
 def login():
     try:
-        data = request.get_json()
-        user = User.query.filter_by(email=data.get('email')).first()
+        data = request.get_json() or {}
+        email = (data.get('email') or '').strip().lower()
+        password = data.get('password')
 
-        if user and bcrypt.check_password_hash(user.password, data.get('password')):
+        if not email or not password:
+            return jsonify({'error': 'Email and password are required'}), 400
+
+        user = User.query.filter_by(email=email).first()
+
+        if user and bcrypt.check_password_hash(user.password, password):
             # FIX: Convert user.id to string for JWT
             access_token = create_access_token(identity=str(user.id))
             return jsonify({

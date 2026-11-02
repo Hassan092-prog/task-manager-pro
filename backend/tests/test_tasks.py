@@ -271,3 +271,134 @@ def test_subtasks_validation_and_id_sanitization(client, register_and_login):
     assert bad_update.status_code == 400
     assert 'cannot be empty' in bad_update.get_json()['error']
 
+def test_task_creation_edge_cases(client, register_and_login):
+    headers = register_and_login(username='edgecaseuser', email='edgecase@example.com')
+
+    # Missing/empty title -> 400
+    res = client.post('/api/tasks', headers=headers, json={'title': '   '})
+    assert res.status_code == 400
+    assert 'Task title is required' in res.get_json()['error']
+
+    # Invalid priority and status fallbacks + explicit due_date
+    res = client.post('/api/tasks', headers=headers, json={
+        'title': 'Fallback Task',
+        'priority': 'extreme',
+        'status': 'unknown_status',
+        'due_date': '2026-11-05T18:00:00Z',
+        'category': 'Operations'
+    })
+    assert res.status_code == 201
+    task = res.get_json()['task']
+    assert task['priority'] == 'medium'
+    assert task['status'] == 'todo'
+    assert task['due_date'] is not None
+
+    # Completed=True on create automatically sets status=done
+    res_comp = client.post('/api/tasks', headers=headers, json={
+        'title': 'Pre-completed Task',
+        'completed': True
+    })
+    assert res_comp.status_code == 201
+    assert res_comp.get_json()['task']['status'] == 'done'
+    assert res_comp.get_json()['task']['completed'] is True
+
+def test_task_update_and_delete_edge_cases(client, register_and_login):
+    headers = register_and_login(username='upduser', email='upd@example.com')
+
+    # Non-existent task update -> 404
+    res = client.put('/api/tasks/99999', headers=headers, json={'title': 'New Title'})
+    assert res.status_code == 404
+
+    # Non-existent task delete -> 404
+    res_del = client.delete('/api/tasks/99999', headers=headers)
+    assert res_del.status_code == 404
+
+    # Create and update description, category, and due_date
+    create_res = client.post('/api/tasks', headers=headers, json={'title': 'Base Task'})
+    task_id = create_res.get_json()['task']['id']
+
+    upd_res = client.put(f'/api/tasks/{task_id}', headers=headers, json={
+        'description': 'Updated detailed notes',
+        'category': 'DevOps',
+        'due_date': '2026-11-10T12:00:00Z'
+    })
+    assert upd_res.status_code == 200
+    updated = upd_res.get_json()['task']
+    assert updated['description'] == 'Updated detailed notes'
+    assert updated['category'] == 'DevOps'
+    assert updated['due_date'] is not None
+
+def test_subtask_error_handling(client, register_and_login):
+    headers = register_and_login(username='suberruser', email='suberr@example.com')
+
+    create_res = client.post('/api/tasks', headers=headers, json={'title': 'Parent Task'})
+    task_id = create_res.get_json()['task']['id']
+
+    # Add subtask with empty title -> 400
+    res = client.post(f'/api/tasks/{task_id}/subtasks', headers=headers, json={'title': '  '})
+    assert res.status_code == 400
+    assert 'Subtask title is required' in res.get_json()['error']
+
+    # Update non-existent subtask -> 404
+    res_upd = client.put(f'/api/tasks/{task_id}/subtasks/non-existent-sub', headers=headers, json={'title': 'Valid Title'})
+    assert res_upd.status_code == 404
+
+    # Delete non-existent subtask -> 404
+    res_del = client.delete(f'/api/tasks/{task_id}/subtasks/non-existent-sub', headers=headers)
+    assert res_del.status_code == 404
+
+def test_task_filters_and_sorting(client, register_and_login):
+    headers = register_and_login(username='filtersortuser', email='filtersort@example.com')
+
+    client.post('/api/tasks', headers=headers, json={
+        'title': 'Task A',
+        'completed': False,
+        'category': 'Finance',
+        'due_date': '2026-11-20T10:00:00Z'
+    })
+    client.post('/api/tasks', headers=headers, json={
+        'title': 'Task B',
+        'completed': True,
+        'category': 'Finance',
+        'due_date': '2026-11-01T10:00:00Z'
+    })
+
+    # Filter completed=true
+    comp_true = client.get('/api/tasks?completed=true', headers=headers)
+    assert len(comp_true.get_json()) == 1
+    assert comp_true.get_json()[0]['title'] == 'Task B'
+
+    # Filter completed=false
+    comp_false = client.get('/api/tasks?completed=false', headers=headers)
+    assert len(comp_false.get_json()) == 1
+    assert comp_false.get_json()[0]['title'] == 'Task A'
+
+    # Filter category=Finance
+    cat_res = client.get('/api/tasks?category=Finance', headers=headers)
+    assert len(cat_res.get_json()) == 2
+
+    # Sort by due_date
+    sort_res = client.get('/api/tasks?sort_by=due_date', headers=headers)
+    tasks = sort_res.get_json()
+    assert tasks[0]['title'] == 'Task B'
+    assert tasks[1]['title'] == 'Task A'
+
+def test_model_to_dict_deserialization_fallback(client, register_and_login):
+    from models import Task
+    import json
+
+    t = Task(
+        title='Mock Task',
+        subtasks=json.dumps([{'id': 's1', 'title': 'Raw JSON String Subtask', 'completed': True}])
+    )
+    d = t.to_dict()
+    assert isinstance(d['subtasks'], list)
+    assert len(d['subtasks']) == 1
+    assert d['subtasks'][0]['title'] == 'Raw JSON String Subtask'
+
+    # Corrupt string fallback
+    t_bad = Task(title='Bad Mock', subtasks='invalid-non-json')
+    d_bad = t_bad.to_dict()
+    assert d_bad['subtasks'] == []
+
+

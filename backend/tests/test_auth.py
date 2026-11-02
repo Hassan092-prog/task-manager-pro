@@ -26,6 +26,39 @@ def test_register_duplicate_email(client):
     assert res.status_code == 400
     assert 'Email already registered' in res.get_json()['error']
 
+def test_register_duplicate_username(client):
+    client.post('/api/auth/register', json={
+        'username': 'uniqueuser',
+        'email': 'unique1@example.com',
+        'password': 'password123'
+    })
+    res = client.post('/api/auth/register', json={
+        'username': 'uniqueuser',
+        'email': 'unique2@example.com',
+        'password': 'password123'
+    })
+    assert res.status_code == 400
+    assert 'Username already taken' in res.get_json()['error']
+
+def test_register_missing_fields(client):
+    res = client.post('/api/auth/register', json={
+        'username': 'incomplete'
+    })
+    assert res.status_code == 400
+
+def test_login_wrong_password(client):
+    client.post('/api/auth/register', json={
+        'username': 'creduser',
+        'email': 'cred@example.com',
+        'password': 'correctpassword'
+    })
+    res = client.post('/api/auth/login', json={
+        'email': 'cred@example.com',
+        'password': 'wrongpassword'
+    })
+    assert res.status_code == 401
+    assert 'Invalid email or password' in res.get_json()['error']
+
 def test_login_success(client):
     client.post('/api/auth/register', json={
         'username': 'loginuser',
@@ -52,6 +85,10 @@ def test_login_invalid_credentials(client):
 def test_protected_route_unauthorized(client):
     res = client.get('/api/auth/protected')
     assert res.status_code == 401
+
+def test_protected_route_invalid_token(client):
+    res = client.get('/api/auth/protected', headers={'Authorization': 'Bearer invalid.token.payload'})
+    assert res.status_code in [401, 422]
 
 def test_protected_route_authorized(client, register_and_login):
     headers = register_and_login(username='protecteduser', email='protected@example.com')

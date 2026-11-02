@@ -198,7 +198,7 @@ def create_app():
                 <span>⚡</span> Task Manager Pro <span style="font-weight:400; color:var(--text-secondary); font-size:1rem;">API</span>
             </div>
             <div class="badge">
-                <span class="pulse"></span> Operational v1.4
+                <span class="pulse"></span> Operational v1.4.0
             </div>
         </div>
         <p class="desc">High-performance REST API service powering Task Manager Pro. Authenticated with JWT, hardened with Bcrypt security, and ready for high-throughput client requests.</p>
