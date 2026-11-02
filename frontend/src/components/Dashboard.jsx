@@ -35,10 +35,10 @@ const Dashboard = ({ onLogout }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  // Active Navigation View ('inbox', 'today', 'upcoming', 'completed', or tag name) derived from URL
+  // Active Navigation View ('inbox', 'today', 'upcoming', 'completed', 'board', or tag name) derived from URL
   const activeNav = useMemo(() => {
     if (projectTag) return `tag:${projectTag}`;
-    if (section && ['inbox', 'today', 'upcoming', 'completed'].includes(section)) {
+    if (section && ['inbox', 'today', 'upcoming', 'completed', 'board'].includes(section)) {
       return section;
     }
     return 'inbox';
@@ -383,6 +383,8 @@ const Dashboard = ({ onLogout }) => {
       } else if (activeNav.startsWith('tag:')) {
         const tagName = activeNav.replace('tag:', '');
         if (task.completed || (task.category || 'General').toLowerCase() !== tagName.toLowerCase()) return false;
+      } else if (activeNav === 'board') {
+        // Board view displays all workflow stages across columns (To Do, In Progress, Done)
       }
 
       // Date Filter from Companion Week Strip
@@ -415,6 +417,7 @@ const Dashboard = ({ onLogout }) => {
     if (activeNav === 'today') return 'Today';
     if (activeNav === 'upcoming') return 'Upcoming';
     if (activeNav === 'completed') return 'Completed';
+    if (activeNav === 'board') return 'Board';
     if (activeNav.startsWith('tag:')) return `# ${activeNav.replace('tag:', '')}`;
     return 'Tasks';
   };
@@ -431,6 +434,7 @@ const Dashboard = ({ onLogout }) => {
       const d = new Date(parts[0], parts[1] - 1, parts[2]);
       return `Filtered for ${d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}`;
     }
+    if (activeNav === 'board') return `${filteredTasks.length} task${filteredTasks.length === 1 ? '' : 's'} across workflow columns`;
     if (activeNav === 'today') return `${today} • ${filteredTasks.length} task${filteredTasks.length === 1 ? '' : 's'} due today`;
     if (activeNav === 'completed') return `${filteredTasks.length} completed task${filteredTasks.length === 1 ? '' : 's'}`;
     if (activeNav === 'upcoming') return `${filteredTasks.length} scheduled task${filteredTasks.length === 1 ? '' : 's'}`;

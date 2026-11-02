@@ -137,6 +137,13 @@ const TaskList = ({ tasks, onUpdateTask, onDeleteTask, viewMode = 'list', active
           icon: <IconCheckCircle size={22} />
         };
       }
+      if (activeNav === 'board') {
+        return {
+          title: 'No tasks on board',
+          desc: 'Create tasks to organize them across Kanban columns.',
+          icon: <IconInbox size={22} />
+        };
+      }
       return {
         title: 'No tasks found',
         desc: 'No tasks match your current view or filter selection.',

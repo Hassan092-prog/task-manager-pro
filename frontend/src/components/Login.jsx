@@ -29,7 +29,8 @@ const Login = ({ onLogin, switchToRegister }) => {
       localStorage.setItem('access_token', result.access_token);
       localStorage.setItem('user', JSON.stringify(result.user));
       if (onLogin) onLogin(result.user);
-      const destination = location.state?.from?.pathname || '/app/inbox';
+      const from = location.state?.from;
+      const destination = from ? `${from.pathname}${from.search || ''}` : '/app/inbox';
       navigate(destination, { replace: true });
     } catch (err) {
       setError(err.response?.data?.error || 'Invalid credentials.');
