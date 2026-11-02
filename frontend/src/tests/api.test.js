@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import axios from 'axios';
 import api from '../services/api';
 
 describe('API Service & Axios Interceptors', () => {
@@ -41,7 +42,7 @@ describe('API Service & Axios Interceptors', () => {
     expect(result).toBe(sampleResponse);
   });
 
-  it('clears localStorage session credentials on 401 response for app routes', async () => {
+  it('clears localStorage session credentials on 401 response for app routes when no refresh_token', async () => {
     localStorage.setItem('access_token', 'stale-token');
     localStorage.setItem('user', JSON.stringify({ username: 'tester' }));
 
@@ -58,6 +59,7 @@ describe('API Service & Axios Interceptors', () => {
     await expect(interceptor.rejected(error401)).rejects.toEqual(error401);
 
     expect(localStorage.getItem('access_token')).toBeNull();
+    expect(localStorage.getItem('refresh_token')).toBeNull();
     expect(localStorage.getItem('user')).toBeNull();
     expect(reloadMock).toHaveBeenCalled();
   });
@@ -81,5 +83,68 @@ describe('API Service & Axios Interceptors', () => {
     expect(localStorage.getItem('access_token')).toBe('existing-token');
     expect(reloadMock).not.toHaveBeenCalled();
   });
+
+  it('rotates token seamlessly on 401 when refresh_token exists', async () => {
+    localStorage.setItem('access_token', 'stale-token');
+    localStorage.setItem('refresh_token', 'valid-refresh-token');
+
+    const axiosSpy = vi.spyOn(axios, 'post').mockResolvedValueOnce({
+      data: { access_token: 'new-refreshed-token' }
+    });
+
+    const interceptor = api.interceptors.response.handlers[0];
+    const originalRequest = {
+      url: '/tasks',
+      headers: { Authorization: 'Bearer stale-token' }
+    };
+    const error401 = {
+      config: originalRequest,
+      response: { status: 401, data: { msg: 'Token expired' } }
+    };
+
+    // Mock api call for retry
+    const apiCallSpy = vi.spyOn(api, 'request').mockResolvedValueOnce({ status: 200, data: [] });
+
+    await interceptor.rejected(error401);
+
+    expect(axiosSpy).toHaveBeenCalledWith(
+      expect.stringContaining('/auth/refresh'),
+      {},
+      expect.objectContaining({
+        headers: { Authorization: 'Bearer valid-refresh-token' }
+      })
+    );
+    expect(localStorage.getItem('access_token')).toBe('new-refreshed-token');
+    expect(originalRequest.headers.Authorization).toBe('Bearer new-refreshed-token');
+    expect(apiCallSpy).toHaveBeenCalled();
+  });
+
+  it('clears credentials and redirects if refresh request fails', async () => {
+    localStorage.setItem('access_token', 'stale-token');
+    localStorage.setItem('refresh_token', 'expired-refresh-token');
+
+    const reloadMock = vi.fn();
+    delete window.location;
+    window.location = { reload: reloadMock };
+
+    vi.spyOn(axios, 'post').mockRejectedValueOnce(new Error('Refresh expired'));
+
+    const interceptor = api.interceptors.response.handlers[0];
+    const originalRequest = {
+      url: '/tasks',
+      headers: { Authorization: 'Bearer stale-token' }
+    };
+    const error401 = {
+      config: originalRequest,
+      response: { status: 401, data: { msg: 'Token expired' } }
+    };
+
+    await expect(interceptor.rejected(error401)).rejects.toThrow('Refresh expired');
+
+    expect(localStorage.getItem('access_token')).toBeNull();
+    expect(localStorage.getItem('refresh_token')).toBeNull();
+    expect(reloadMock).toHaveBeenCalled();
+  });
 });
+
 

@@ -214,6 +214,10 @@ def create_app():
                 <span style="color:var(--text-secondary); font-size:0.75rem;">JWT Issuance</span>
             </div>
             <div class="endpoint-row">
+                <span><span class="method post">POST</span> /api/auth/refresh</span>
+                <span style="color:var(--text-secondary); font-size:0.75rem;">Token Rotation</span>
+            </div>
+            <div class="endpoint-row">
                 <span><span class="method get">GET</span> /api/auth/protected</span>
                 <span style="color:var(--text-secondary); font-size:0.75rem;">Session Verify</span>
             </div>
@@ -251,6 +255,7 @@ def create_app():
             'endpoints': {
                 'auth_register': 'POST /api/auth/register',
                 'auth_login': 'POST /api/auth/login',
+                'auth_refresh': 'POST /api/auth/refresh',
                 'auth_protected': 'GET /api/auth/protected',
                 'tasks_list': 'GET /api/tasks',
                 'tasks_create': 'POST /api/tasks',

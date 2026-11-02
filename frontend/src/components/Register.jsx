@@ -41,6 +41,9 @@ const Register = ({ onRegister, switchToLogin }) => {
       const { confirmPassword: _confirmPassword, ...registerData } = formData;
       const result = await authService.register(registerData);
       localStorage.setItem('access_token', result.access_token);
+      if (result.refresh_token) {
+        localStorage.setItem('refresh_token', result.refresh_token);
+      }
       localStorage.setItem('user', JSON.stringify(result.user));
       if (onRegister) onRegister(result.user);
       navigate('/app/inbox', { replace: true });

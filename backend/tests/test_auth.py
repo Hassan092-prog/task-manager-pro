@@ -9,6 +9,7 @@ def test_register_success(client):
     assert res.status_code == 201
     data = res.get_json()
     assert 'access_token' in data
+    assert 'refresh_token' in data
     assert data['user']['username'] == 'newuser'
     assert data['user']['email'] == 'newuser@example.com'
 
@@ -101,6 +102,7 @@ def test_login_success(client):
     assert res.status_code == 200
     data = res.get_json()
     assert 'access_token' in data
+    assert 'refresh_token' in data
     assert data['user']['email'] == 'login@example.com'
 
 def test_login_invalid_credentials(client):
@@ -125,4 +127,38 @@ def test_protected_route_authorized(client, register_and_login):
     assert res.status_code == 200
     data = res.get_json()
     assert 'protecteduser' in data['message']
+
+def test_refresh_token_missing(client):
+    res = client.post('/api/auth/refresh')
+    assert res.status_code == 401
+
+def test_refresh_token_success(client):
+    reg = client.post('/api/auth/register', json={
+        'username': 'refresher',
+        'email': 'refresh@example.com',
+        'password': 'password123'
+    })
+    refresh_token = reg.get_json()['refresh_token']
+    
+    # Try refresh endpoint
+    res = client.post('/api/auth/refresh', headers={'Authorization': f'Bearer {refresh_token}'})
+    assert res.status_code == 200
+    new_data = res.get_json()
+    assert 'access_token' in new_data
+    
+    # Verify new access token grants access to protected routes
+    prot = client.get('/api/auth/protected', headers={'Authorization': f'Bearer {new_data["access_token"]}'})
+    assert prot.status_code == 200
+    assert 'refresher' in prot.get_json()['message']
+
+def test_refresh_token_with_access_token_fails(client):
+    reg = client.post('/api/auth/register', json={
+        'username': 'badrefresh',
+        'email': 'badrefresh@example.com',
+        'password': 'password123'
+    })
+    access_token = reg.get_json()['access_token']
+    # An access token passed where a refresh token is required must fail
+    res = client.post('/api/auth/refresh', headers={'Authorization': f'Bearer {access_token}'})
+    assert res.status_code == 422
 

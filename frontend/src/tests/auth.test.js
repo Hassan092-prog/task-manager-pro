@@ -27,12 +27,14 @@ describe('authService', () => {
     expect(localStorage.getItem('user')).toBeNull();
   });
 
-  it('logout removes access token and user from localStorage', () => {
+  it('logout removes access token, refresh token, and user from localStorage', () => {
     localStorage.setItem('access_token', 'token-to-remove');
+    localStorage.setItem('refresh_token', 'refresh-token-to-remove');
     localStorage.setItem('user', JSON.stringify({ id: 1 }));
     authService.logout();
     expect(authService.isAuthenticated()).toBe(false);
     expect(authService.getCurrentUser()).toBeNull();
+    expect(localStorage.getItem('refresh_token')).toBeNull();
   });
 });
 

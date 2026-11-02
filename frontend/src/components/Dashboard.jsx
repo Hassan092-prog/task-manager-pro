@@ -59,6 +59,20 @@ const Dashboard = ({ onLogout }) => {
   };
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isOnline, setIsOnline] = useState(() => (typeof navigator !== 'undefined' ? navigator.onLine : true));
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // Daily Companion Panel & Filtering State (default open on >= 1140px, off-canvas on mobile/tablet)
   const [isCompanionVisible, setIsCompanionVisible] = useState(() => {
@@ -699,6 +713,12 @@ const Dashboard = ({ onLogout }) => {
             </button>
             <h1 className="view-heading">{getNavTitle()}</h1>
             <span className="view-count-badge">{filteredTasks.length}</span>
+            {!isOnline && (
+              <div className="offline-pill" role="status" aria-live="polite">
+                <span className="offline-dot"></span>
+                <span>Offline (Cached)</span>
+              </div>
+            )}
           </div>
 
           <div className="topbar-controls">

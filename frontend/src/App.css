@@ -2514,3 +2514,29 @@
   border-color: var(--border-focus);
   outline: none;
 }
+
+
+/* PWA & Network Resilience Indicator */
+.offline-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  letter-spacing: -0.01em;
+  user-select: none;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.offline-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 6px #ef4444;
+}
