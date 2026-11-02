@@ -108,12 +108,14 @@ task-manager-pro/
         ├── config.js         # Resilient API endpoint resolver
         ├── main.jsx          # React DOM root render
         ├── components/
-        │   ├── Dashboard.jsx # Command workspace with filters & views
-        │   ├── Login.jsx     # Clean auth login card
-        │   ├── Register.jsx  # Clean auth register card
-        │   ├── TaskForm.jsx  # Task creation modal with priority & presets
-        │   ├── TaskItem.jsx  # Card with custom checkbox & metadata chips
-        │   └── TaskList.jsx  # Dual view: List & Kanban Board
+        │   ├── DailyCompanion.jsx # Rhythm ring, week strip, project focus, scratchpad
+        │   ├── Dashboard.jsx      # Command workspace with filters & views
+        │   ├── Icons.jsx          # Custom SVG icon set (feather/lucide style)
+        │   ├── Login.jsx          # Clean auth login card
+        │   ├── NewTaskModal.jsx   # Accessible task creation modal with priority & presets
+        │   ├── Register.jsx       # Clean auth register card
+        │   ├── TaskItem.jsx       # Card with custom checkbox & metadata chips
+        │   └── TaskList.jsx       # Dual view: List & Kanban Board
         └── services/
             ├── api.js        # Axios instance with auth interceptor
             ├── auth.js       # Auth API client

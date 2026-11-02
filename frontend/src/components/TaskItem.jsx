@@ -8,6 +8,14 @@ const TaskItem = ({ task, onUpdate, onDelete }) => {
   const [editCategory, setEditCategory] = useState(task.category || 'General');
   const [editDueDate, setEditDueDate] = useState(task.due_date ? task.due_date.substring(0, 16) : '');
 
+  const startEditing = () => {
+    setEditTitle(task.title);
+    setEditPriority(task.priority || 'medium');
+    setEditCategory(task.category || 'General');
+    setEditDueDate(task.due_date ? task.due_date.substring(0, 16) : '');
+    setIsEditing(true);
+  };
+
   const handleToggle = () => {
     onUpdate(task.id, { completed: !task.completed });
   };
@@ -108,7 +116,7 @@ const TaskItem = ({ task, onUpdate, onDelete }) => {
           <div className="task-row-actions">
             <button
               type="button"
-              onClick={() => setIsEditing(true)}
+              onClick={startEditing}
               className="btn-icon-subtle btn-action-edit"
               title="Edit task"
               aria-label="Edit task"

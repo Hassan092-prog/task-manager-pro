@@ -49,6 +49,8 @@ const Dashboard = ({ onLogout }) => {
   // Lightweight Avatar Profile Popover State
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profilePopoverRef = useRef(null);
+  const user = authService.getCurrentUser();
+  const userInitials = (user?.username || 'U').substring(0, 2).toUpperCase();
 
   // Quick Task Creation Inline & Modal State
   const [newTitle, setNewTitle] = useState('');
@@ -328,9 +330,6 @@ const Dashboard = ({ onLogout }) => {
       return true;
     });
   }, [tasks, activeNav, searchQuery, selectedDateFilter, activeFilterPill]);
-
-  const user = authService.getCurrentUser();
-  const userInitials = (user?.username || 'U').substring(0, 2).toUpperCase();
 
   // Heading text
   const getNavTitle = () => {

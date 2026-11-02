@@ -7,6 +7,12 @@ const BoardTaskCard = ({ task, onUpdateTask, onDeleteTask }) => {
   const [editTitle, setEditTitle] = useState(task.title);
   const [editPriority, setEditPriority] = useState(task.priority || 'medium');
 
+  const startEditing = () => {
+    setEditTitle(task.title);
+    setEditPriority(task.priority || 'medium');
+    setIsEditing(true);
+  };
+
   const handleSave = (e) => {
     e.preventDefault();
     if (!editTitle.trim()) return;
@@ -78,7 +84,7 @@ const BoardTaskCard = ({ task, onUpdateTask, onDeleteTask }) => {
         <div className="board-task-actions">
           <button
             type="button"
-            onClick={() => setIsEditing(true)}
+            onClick={startEditing}
             className="btn-icon-subtle btn-action-edit"
             title="Edit task"
             aria-label="Edit task"

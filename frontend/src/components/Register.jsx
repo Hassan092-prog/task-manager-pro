@@ -36,7 +36,7 @@ const Register = ({ onRegister, switchToLogin }) => {
     }
 
     try {
-      const { confirmPassword, ...registerData } = formData;
+      const { confirmPassword: _confirmPassword, ...registerData } = formData;
       const result = await authService.register(registerData);
       localStorage.setItem('access_token', result.access_token);
       localStorage.setItem('user', JSON.stringify(result.user));

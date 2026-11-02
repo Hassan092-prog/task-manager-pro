@@ -66,12 +66,13 @@ graph TD
 App.jsx (Root View Router & Auth State Guard)
 ├── Login.jsx (Authentication Entrypoint)
 ├── Register.jsx (User Sign-up)
-└── Dashboard.jsx (Authenticated Workspace)
-    ├── Header (Title, User Greeting, Logout)
-    ├── Stats Overview (Total, Completed, Pending metrics)
-    ├── TaskForm.jsx (Input form for title, description, due date)
-    └── TaskList.jsx (Collection container)
-        └── TaskItem.jsx (Task card with toggle, edit, delete actions)
+└── Dashboard.jsx (Authenticated Workspace Cockpit)
+    ├── Topbar & Sidebar Navigation (Views, Projects, Profile Popover)
+    ├── Inline Quick-Add (Desktop) & NewTaskModal.jsx (Mobile / Modal)
+    ├── TaskList.jsx (Dual-View Container: List & Kanban Board)
+    │   ├── TaskItem.jsx (List View Task Row with inline editor)
+    │   └── BoardTaskCard (Kanban Column Task Card with inline editor)
+    └── DailyCompanion.jsx (Rhythm Ring, Week Strip, Project Distribution, Scratchpad)
 ```
 
 ### 2.3 State Management & Auth Flow
