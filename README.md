@@ -1,40 +1,53 @@
 # Task Manager Pro ⚡
 
-> A modern, lightweight, and versatile full-stack task management application engineered for high-performance productivity across desktop, tablet, and mobile devices.
+> A modern, lightweight, and versatile full-stack task management application engineered for high performance, mobile ergonomics, and keyboard-driven productivity across desktop, tablet, and mobile devices.
 
 [![Frontend](https://img.shields.io/badge/Frontend-Vercel-black?style=flat&logo=vercel)](https://task-manager-frontend-lake-seven.vercel.app)
 [![Backend](https://img.shields.io/badge/Backend-Render-46E3B7?style=flat&logo=render)](https://task-manager-backend-767m.onrender.com)
 [![React](https://img.shields.io/badge/React-19.1-blue?style=flat&logo=react)](https://react.dev)
+[![Vite](https://img.shields.io/badge/Vite-7.1-646CFF?style=flat&logo=vite)](https://vitejs.dev/)
 [![Flask](https://img.shields.io/badge/Flask-2.3-lightgrey?style=flat&logo=flask)](https://flask.palletsprojects.com/)
+[![Tests](https://img.shields.io/badge/Tests-82%20Vitest%20%7C%2034%20Pytest-brightgreen)](./docs/STATUS.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
 ---
 
-## 🌐 Live Deployments
+## 🌐 Live Deployments & Local Ports
 
-- **Frontend Application:** [https://task-manager-frontend-lake-seven.vercel.app](https://task-manager-frontend-lake-seven.vercel.app)
-- **Backend API Service:** [https://task-manager-backend-767m.onrender.com/](https://task-manager-backend-767m.onrender.com/)
+- **Frontend Application:** [https://task-manager-frontend-lake-seven.vercel.app](https://task-manager-frontend-lake-seven.vercel.app) (or `http://localhost:5173`)
+- **Backend API Service:** [https://task-manager-backend-767m.onrender.com/](https://task-manager-backend-767m.onrender.com/) (or `http://localhost:5001`)
 
 ---
 
 ## 📚 Project Documentation
 
-Detailed technical documentation is available in the [`docs/`](./docs) folder:
+Detailed technical architecture and documentation are maintained in the [`docs/`](./docs) directory:
 
-- 🏗️ **[System Architecture](./docs/ARCHITECTURE.md):** Complete component tree, data flow, ER diagram, and deployment topology.
-- 📊 **[Codebase Status & Audit](./docs/STATUS.md):** Current state, bug fixes applied, and feature audit matrix.
-- 🗺️ **[Product Roadmap](./docs/ROADMAP.md):** Multi-device UI design, mobile vs desktop ergonomics, and phased sprint plan.
-- 🔌 **[REST API Specification](./docs/API.md):** Authentication, task CRUD endpoints, payloads, and response structures.
+- 🏗️ **[System Architecture](./docs/ARCHITECTURE.md):** Complete component hierarchy, data models, ER diagram, and container topology.
+- 📊 **[Codebase Status & Audit Report](./docs/STATUS.md):** Verified features, test metrics, and upgrade matrix.
+- 🗺️ **[Product Roadmap](./docs/ROADMAP.md):** Phased sprint plan and multi-device ergonomics.
+- 🔌 **[REST API Specification](./docs/API.md):** Authentication, task CRUD, subtask endpoints, payloads, and response structures.
 
 ---
 
 ## 🚀 Key Features
 
-- **🔐 Robust Authentication:** Secure user registration & login backed by Bcrypt password hashing and JWT token security.
-- **⚡ Snappy Task Management:** Create, view, update, and delete tasks with instant optimistic UI updates.
-- **📱 Responsive by Design:** Engineered to adapt smoothly from mobile screens (compact cards) to large desktop monitors.
-- **🪶 Lightweight & Zero Bloat:** Built with Vanilla CSS design tokens and React 19 for maximum speed and zero heavy UI dependency overhead.
-- **☁️ Cloud Native Architecture:** Render-hosted Flask backend with PostgreSQL, and Vercel-hosted Vite frontend.
+- **⚡ Global Command Palette (`Cmd+K` / `Ctrl+K`):** Spotlight-style command center for instantaneous task search, fast navigation, quick actions, and theme toggling with cyclic keyboard navigation.
+- **📋 Dual View Engine:** Switch seamlessly between a clean **Swiss List View** and a 3-column **Drag-and-Drop Kanban Board** (`To Do`, `In Progress`, `Done`) powered by `@dnd-kit/core`.
+- **📱 Mobile-Native Ergonomics:**
+  - Fixed bottom navigation bar with Apple safe-area inset support (`env(safe-area-inset-bottom)`).
+  - Axis-locked touch swipe gestures: swipe right to toggle completion, swipe left to delete.
+  - Touch drag-to-dismiss bottom sheet modal for task creation.
+  - Floating Action Button (FAB) positioned for single-handed thumb operation.
+- **📊 Productivity Analytics & Velocity Curves (`/app/stats`):**
+  - Pure SVG 14-day completion velocity area chart with interactive tooltip nodes (zero external charting libraries).
+  - Daily consistency streak counter (active & all-time best records).
+  - Category distribution progress bars and urgency tier matrix.
+- **✅ Nested Subtasks & Checklists:** Break complex tasks into subtasks with visual completion badges, inline checklist toggles on Kanban cards, and modal checklist builders.
+- **🌅 Daily Rhythm Companion:** Daily rhythm ring, 7-day interactive week strip, scratchpad, and workload distribution.
+- **🔐 Secure Authentication:** Bcrypt password hashing, JWT token rotation (`/api/auth/refresh`), and Axios automatic 401 retry queues.
+- **📶 PWA & Offline Resilience:** Progressive Web App with Workbox runtime caching, offline status badge, and network state indicators.
+- **🪶 Zero UI Bloat:** Pure Vanilla CSS design tokens (Obsidian / Zinc) and pure SVG icons. No Tailwind, Bootstrap, or component library bloat.
 
 ---
 
@@ -42,21 +55,27 @@ Detailed technical documentation is available in the [`docs/`](./docs) folder:
 
 | Tier | Technologies |
 | :--- | :--- |
-| **Frontend** | React 19, Vite 7, React Router DOM 7, Axios, Vanilla CSS (CSS Variables) |
+| **Frontend** | React 19, Vite 7, React Router DOM 7, `@dnd-kit/core`, Axios, `vite-plugin-pwa`, Vanilla CSS |
 | **Backend** | Python 3.11+, Flask 2.3, Flask-SQLAlchemy, Flask-Bcrypt, Flask-JWT-Extended, Flask-CORS, Gunicorn |
-| **Database** | SQLite (Local Development) / PostgreSQL (Production) |
-| **Hosting & CI/CD** | Vercel (Frontend SPA) + Render (Backend Web Service) |
+| **Database** | SQLite (Local Development & Persistent Docker Volume) / PostgreSQL |
+| **Containerization** | Docker, Docker Compose, Multi-stage Dockerfiles, Nginx Alpine Reverse Proxy |
+| **Testing & CI** | Vitest (82 unit tests), Pytest (34 unit tests with 92% coverage), ESLint, GitHub Actions |
+
+---
 
 ## 🐳 Docker Setup (Recommended)
 
-Run the entire full-stack application (Frontend + Backend + Database) with a single command:
+Run the entire full-stack application (Frontend + Backend + SQLite database) with a single command:
 
 ```bash
-# Start Frontend, Backend & SQLite persistence
+# Start Frontend (:5173), Backend (:5001) & SQLite persistence
 docker compose up -d --build
 
 # View container logs
 docker compose logs -f
+
+# Check container health status
+docker compose ps
 
 # Stop all services
 docker compose down
@@ -73,47 +92,20 @@ docker compose --profile postgres up -d --build
 
 ---
 
-## 💻 Manual Development Setup (Without Docker)
+## 🧪 Automated Test Execution
 
-### 1. Prerequisites
-- Node.js (v18+) & npm
-- Python (v3.10+) & pip
-
-### 2. Backend Setup
+### Frontend Tests (Vitest & ESLint)
 ```bash
-# Navigate to backend directory
-cd backend
-
-# Create and activate a virtual environment
-python -m venv venv
-# On Windows:
-venv\Scripts\activate
-# On Linux/macOS:
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Configure environment variables
-cp .env.example .env
-
-# Run development server (runs on http://localhost:5000)
-python app.py
+cd frontend
+npm test -- --run    # Executes all 82 Vitest tests
+npm run lint         # Runs ESLint (0 warnings, 0 errors)
 ```
 
-### 3. Frontend Setup
+### Backend Tests (Pytest)
 ```bash
-# In a separate terminal, navigate to frontend directory
-cd frontend
-
-# Install dependencies
-npm install
-
-# Configure environment variables
-cp .env.example .env
-
-# Run development server (runs on http://localhost:5173)
-npm run dev
+cd backend
+source venv/bin/activate
+pytest tests/ -v     # Executes all 34 Pytest tests
 ```
 
 ---

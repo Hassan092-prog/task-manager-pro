@@ -9,12 +9,12 @@
 1. **Zero Bloat & Lightweight Architecture:**  
    Avoid heavy UI component libraries. Use tailored Vanilla CSS with CSS custom properties (variables) for fast initial paint, negligible JavaScript bundle impact, and total styling freedom.
 2. **Device-Adaptive Ergonomics:**  
-   - **Small Screens (Mobile):** Single-hand operation, bottom navigation, floating action button (FAB), swipe actions, clean bottom sheets for modals.
-   - **Large Screens (Desktop/Tablet):** Information-dense multi-column layout, collapsible sidebar, Kanban board and calendar views, keyboard shortcuts.
+   - **Small Screens (Mobile):** Single-hand operation, bottom navigation, floating action button (FAB), touch swipe actions, clean bottom sheets for modals.
+   - **Large Screens (Desktop/Tablet):** Information-dense multi-column layout, collapsible sidebar, Kanban board view, spotlight command palette (`Ctrl+K`).
 3. **All-Rounder Task Capabilities:**  
-   Support diverse workflows (GTD, Eisenhower matrix, simple checklists, project boards) through priorities, custom tags, due dates, and status stages.
+   Support diverse workflows (GTD, Kanban, Eisenhower matrix, subtask checklists) through priorities, custom tags, due dates, workflow columns, and velocity analytics.
 4. **Snappy & Resilient:**  
-   Optimistic UI updates, instant search/filtering, and local caching fallback.
+   Optimistic UI updates, instant search/filtering, PWA offline caching, and silent JWT token refresh.
 
 ---
 
@@ -31,7 +31,7 @@
 │ 📌 Inbox     │                                    │ - Description      │
 │ 📅 Today     │ [ ] Task 1   [High] [Work]  Today  │ - Due Date/Time    │
 │ 🗓️ Upcoming  │ [ ] Task 2   [Med]  [Life]  Tomorrow│ - Priority: High  │
-│ ⭐ Priority  │ [x] Task 3   [Low]  [Side]  Done   │ - Subtasks (2/3)   │
+│ 📊 Stats     │ [x] Task 3   [Low]  [Side]  Done   │ - Subtasks (2/3)   │
 │ 🏷️ Tags      │                                    │ - Activity History │
 │ ⚙️ Settings  │                                    │ [Delete] [Save]    │
 └──────────────┴────────────────────────────────────┴────────────────────┘
@@ -56,7 +56,7 @@
 │                      │ + │ (FAB)     │
 │                      └───┘           │
 ├──────────────────────────────────────┤
-│  [📋 Tasks]   [📊 Stats]   [⚙️ More] │  <- Bottom App Navigation
+│  [📋 Tasks] [📋 Board] [📊 Stats]    │  <- Fixed Mobile Bottom Navigation
 └──────────────────────────────────────┘
 ```
 
@@ -64,67 +64,65 @@
 
 ## 3. Phased Implementation Roadmap
 
-### Phase 1: Modern Lightweight Design System & Foundation (Sprint 1)
-- [ ] **Design Tokens & Theme Engine:**
-  - Define semantic CSS variables in `index.css` (primary accent, secondary accent, card surfaces, border gradients, text contrasts).
-  - Implement a sleek Dark Mode & Light Mode switch with user preference persistence.
-  - Subtle micro-animations (card entry, checkmark bounce, hover elevation).
-- [ ] **Route Integration with React Router DOM:**
-  - Replace view state string switches with explicit routes (`/login`, `/register`, `/app`, `/app/tasks`, `/app/board`).
+### Phase 1: Modern Lightweight Design System & Foundation [COMPLETED]
+- [x] **Design Tokens & Theme Engine:**
+  - Semantic CSS variables in `index.css` and `App.css` (Obsidian / Zinc tokens).
+  - Dark Mode & Light Mode switch with user preference persistence.
+- [x] **Route Integration with React Router DOM:**
+  - Declarative routes (`/login`, `/register`, `/app/:section`, `/app/board`, `/app/stats`).
   - Auth guards (`ProtectedRoute` component) redirecting unauthorized users cleanly.
-- [ ] **Modern Typography & Icons:**
-  - Fast-loading system font stack or Inter font.
-  - Lightweight SVG icon set (lucide/feather style SVGs) embedded without bulky icon libraries.
+- [x] **Modern Typography & Icons:**
+  - Lightweight pure SVG icons embedded without bulky icon libraries.
 
 ---
 
-### Phase 2: Core Task Model & API Expansion (Sprint 2)
-- [ ] **Database Schema Upgrade (`models.py`):**
-  - `priority`: Enum or String (`'low'`, `'medium'`, `'high'`, `'urgent'`).
-  - `category` / `tags`: Comma-separated or tag association.
-  - `status`: String (`'todo'`, `'in_progress'`, `'completed'`).
-  - `subtasks`: Lightweight JSON field or related subtask items.
-  - `updated_at`: Auto-timestamp for change tracking.
-- [ ] **Enhanced Backend Endpoints (`routes.py`):**
-  - Support query filters on `GET /api/tasks` (e.g., `?priority=high&status=todo&search=design`).
-  - Validation decorators for title presence and length.
-- [ ] **Frontend Model Adaptation:**
-  - Expand `TaskForm` to include priority picker, category/tag selection, and due date.
-  - Expand `TaskItem` to render color-coded priority pills and category badges.
+### Phase 2: Core Task Model & API Expansion [COMPLETED]
+- [x] **Database Schema Upgrade (`models.py`):**
+  - `priority`: String (`low`, `medium`, `high`, `urgent`).
+  - `category`: String tags (`Engineering`, `Design`, `Work`, `Personal`).
+  - `status`: String (`todo`, `in_progress`, `done`).
+  - `subtasks`: Lightweight JSON field with auto-migration.
+  - `updated_at` & `completed_at`: Timestamps for change & velocity tracking.
+- [x] **Enhanced Backend Endpoints (`routes.py`):**
+  - Multi-criteria query filters on `GET /api/tasks` (`status`, `priority`, `category`, `completed`, `search`, `sort_by`).
+- [x] **Frontend Model Adaptation:**
+  - Color-coded priority pills, category badges, and interactive due date badges.
 
 ---
 
-### Phase 3: Dual-Screen Ergonomics & Views (Sprint 3)
-- [ ] **Desktop & Large Screen Features:**
-  - **Collapsible Sidebar:** Navigation tree with quick filters (Inbox, Today, Upcoming, Important, Categories).
-  - **Kanban Board View:** Drag-and-drop or column-based task states (To-Do, In Progress, Done).
-  - **Keyboard Shortcuts:** `N` for new task, `/` or `Ctrl+K` for search, `Esc` to close modals.
-- [ ] **Mobile & Small Screen Features:**
-  - **Native-feel Bottom Navigation:** Fast tab switching between Tasks, Board, and Stats.
-  - **Floating Action Button (FAB):** Fixed bottom-right quick-add button for one-handed operation.
-  - **Bottom Sheet Modal:** Slide-up creation and editing drawer on mobile instead of intrusive center modals.
-  - **Swipe Actions:** Swipe right to complete, swipe left to delete.
+### Phase 3: Dual-Screen Ergonomics & Views [COMPLETED]
+- [x] **Desktop & Large Screen Features:**
+  - **Collapsible Sidebar:** Navigation tree with quick filters (Inbox, Today, Upcoming, Completed, Board, Stats, Tags).
+  - **Kanban Board View:** 3-column drag-and-drop task board (`To Do`, `In Progress`, `Done`) via `@dnd-kit/core`.
+  - **Global Command Palette:** Spotlight modal (`Ctrl+K` / `Cmd+K`) with live search, action dispatch, and keyboard cyclic navigation.
+- [x] **Mobile & Small Screen Features:**
+  - **Native Bottom Navigation:** 4-tab bar (Tasks, Board, Stats, Rhythm) with safe-area insets.
+  - **Floating Action Button (FAB):** Fixed bottom-right quick-add button positioned above bottom navigation.
+  - **Bottom Sheet Modal:** Drag-to-dismiss creation drawer on mobile.
+  - **Touch Swipe Actions:** Axis-locked directional swipes (swipe right to complete, swipe left to delete).
 
 ---
 
-### Phase 4: Productivity & All-Rounder Power Tools (Sprint 4)
-- [ ] **Instant Client-Side Search & Multi-Filters:**
-  - Real-time search with fuzzy matching on title and description.
-  - Quick filter chips: "Due Today", "Overdue", "High Priority", "Work", "Personal".
-- [ ] **Productivity Analytics & Streaks:**
-  - Completion percentage progress bars.
-  - Daily completion streaks and weekly productivity charts.
-- [ ] **Bulk Task Actions:**
-  - Multi-select tasks for batch delete, mark as completed, or re-prioritize.
+### Phase 4: Productivity & All-Rounder Power Tools [COMPLETED]
+- [x] **Instant Client-Side Search & Multi-Filters:**
+  - Real-time search with fuzzy matching on title, description, and tags.
+  - Quick filter chips: "All", "🔴 Urgent", "🟠 High", "Work", "Personal", etc.
+- [x] **Productivity Analytics & Velocity Curves (`/app/stats`):**
+  - Pure SVG 14-day completion velocity area chart with interactive tooltip nodes.
+  - Daily consistency streak counter (Current & Best records).
+  - Category breakdown bars and urgency tier distribution matrix.
+- [x] **Nested Subtasks & Checklist Builders:**
+  - Relational subtask checklists on task cards and modals.
 
 ---
 
-### Phase 5: Resilience, Offline & Deployment Polish (Sprint 5)
-- [ ] **Offline Resilience & PWA:**
-  - Web App Manifest and Service Worker for "Add to Home Screen" on iOS & Android.
-  - LocalStorage optimistic caching to allow viewing and editing tasks when offline.
-- [ ] **Security Hardening:**
-  - JWT Refresh Token rotation.
-  - Email format and password complexity validation on both frontend and backend.
-- [ ] **Automated CI/CD Verification:**
-  - Automated build checks for Vite and Flask before deployment.
+### Phase 5: Resilience, Offline & Deployment Polish [IN PROGRESS]
+- [x] **PWA & Offline Resilience:**
+  - Web App Manifest and Service Worker runtime caching for `/api/tasks`.
+  - Offline network detection with visual cached state pill.
+  - Silent JWT refresh token rotation with Axios 401 retry queue.
+- [ ] **Phase 10 — Offline-Write Mutation Queue:**
+  - Two-way outbox sync queue in `localStorage` for offline task mutations (`CREATE`, `UPDATE`, `DELETE`).
+  - Automatic reconnection drain via `online` event listener.
+- [ ] **Phase 11 — CD Pipeline:**
+  - Automated GitHub Actions CD workflow (`cd.yml`) publishing container images to GitHub Container Registry (GHCR).

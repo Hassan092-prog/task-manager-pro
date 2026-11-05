@@ -201,7 +201,7 @@ def create_app():
                 <span>⚡</span> Task Manager Pro <span style="font-weight:400; color:var(--text-secondary); font-size:1rem;">API</span>
             </div>
             <div class="badge">
-                <span class="pulse"></span> Operational v1.4.0
+                <span class="pulse"></span> Operational v2.0.0
             </div>
         </div>
         <p class="desc">High-performance REST API service powering Task Manager Pro. Authenticated with JWT, hardened with Bcrypt security, and ready for high-throughput client requests.</p>
@@ -253,7 +253,7 @@ def create_app():
         return jsonify({
             'service': 'Task Manager Pro API',
             'status': 'operational',
-            'version': '1.4.0',
+            'version': '2.0.0',
             'documentation': 'https://github.com/786Hassan92/task-manager-pro',
             'endpoints': {
                 'auth_register': 'POST /api/auth/register',
