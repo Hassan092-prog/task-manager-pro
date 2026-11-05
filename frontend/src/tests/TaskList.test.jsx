@@ -120,30 +120,36 @@ describe('TaskList & Kanban Board component', () => {
   });
 
   it('renders task description and relative due date on board card when present', () => {
-    const richTasks = [
-      {
-        id: 10,
-        title: 'Design API Specs',
-        description: 'Document endpoints for mobile client',
-        priority: 'high',
-        status: 'todo',
-        completed: false,
-        due_date: '2026-11-05T18:00:00'
-      }
-    ];
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-01T12:00:00Z'));
+    try {
+      const richTasks = [
+        {
+          id: 10,
+          title: 'Design API Specs',
+          description: 'Document endpoints for mobile client',
+          priority: 'high',
+          status: 'todo',
+          completed: false,
+          due_date: '2026-11-05T18:00:00'
+        }
+      ];
 
-    render(
-      <TaskList
-        tasks={richTasks}
-        onUpdateTask={vi.fn()}
-        onDeleteTask={vi.fn()}
-        viewMode="board"
-      />
-    );
+      render(
+        <TaskList
+          tasks={richTasks}
+          onUpdateTask={vi.fn()}
+          onDeleteTask={vi.fn()}
+          viewMode="board"
+        />
+      );
 
-    expect(screen.getByText('Design API Specs')).toBeInTheDocument();
-    expect(screen.getByText('Document endpoints for mobile client')).toBeInTheDocument();
-    expect(screen.getByText('Nov 5')).toBeInTheDocument();
+      expect(screen.getByText('Design API Specs')).toBeInTheDocument();
+      expect(screen.getByText('Document endpoints for mobile client')).toBeInTheDocument();
+      expect(screen.getByText('Nov 5')).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('toggles completion on a board task card', () => {

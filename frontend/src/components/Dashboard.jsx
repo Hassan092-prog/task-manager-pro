@@ -5,6 +5,7 @@ import { authService } from '../services/auth';
 import TaskList from './TaskList';
 import DailyCompanion from './DailyCompanion';
 import NewTaskModal from './NewTaskModal';
+import CommandPalette from './CommandPalette';
 import { 
   IconInbox, 
   IconCalendar, 
@@ -81,6 +82,10 @@ const Dashboard = ({ onLogout }) => {
     }
     return true;
   });
+
+  // Global Command Palette state
+  const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+  const prevFocusRef = useRef(null);
 
   // Date Filter & Filter Pills synchronized with URL search params
   const selectedDateFilter = searchParams.get('date') || null;
@@ -194,6 +199,17 @@ const Dashboard = ({ onLogout }) => {
   // Global Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // Global Command Palette shortcut: Cmd+K or Ctrl+K (works from anywhere)
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        prevFocusRef.current = document.activeElement;
+        setIsPaletteOpen(prev => !prev);
+        return;
+      }
+
+      // If Command Palette is open, do not handle dashboard global shortcuts
+      if (isPaletteOpen) return;
+
       if (e.key === 'Escape') {
         setIsProfileOpen(false);
       }
@@ -212,7 +228,7 @@ const Dashboard = ({ onLogout }) => {
         } else {
           quickInputRef.current?.focus();
         }
-      } else if (e.key === '/' || (e.ctrlKey && e.key === 'k') || (e.metaKey && e.key === 'k')) {
+      } else if (e.key === '/') {
         e.preventDefault();
         searchInputRef.current?.focus();
       }
@@ -220,7 +236,7 @@ const Dashboard = ({ onLogout }) => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [isPaletteOpen]);
 
   const fetchTasks = async () => {
     setLoading(true);
@@ -722,6 +738,21 @@ const Dashboard = ({ onLogout }) => {
           </div>
 
           <div className="topbar-controls">
+            <button
+              type="button"
+              className="btn-command-palette-trigger"
+              onClick={() => {
+                prevFocusRef.current = document.activeElement;
+                setIsPaletteOpen(true);
+              }}
+              title="Command Palette (Ctrl+K / Cmd+K)"
+              aria-label="Open command palette"
+            >
+              <IconSearch size={13} />
+              <span className="command-palette-hint-text">Commands</span>
+              <kbd className="command-palette-kbd">⌘K</kbd>
+            </button>
+
             <div className="search-wrapper desktop-only-search">
               <IconSearch size={14} />
               <input
@@ -1014,6 +1045,24 @@ const Dashboard = ({ onLogout }) => {
         onClose={() => setIsTaskModalOpen(false)}
         onSubmit={handleModalCreateTask}
         defaultCategory={activeNav.startsWith('tag:') ? activeNav.replace('tag:', '') : 'Work'}
+      />
+
+      {/* Global Command Palette (Cmd+K / Ctrl+K) */}
+      <CommandPalette
+        isOpen={isPaletteOpen}
+        onClose={() => {
+          setIsPaletteOpen(false);
+          if (prevFocusRef.current && typeof prevFocusRef.current.focus === 'function') {
+            prevFocusRef.current.focus();
+          }
+        }}
+        tasks={tasks}
+        navigate={handleNavigate}
+        onToggleCompanion={() => setIsCompanionVisible(v => !v)}
+        onToggleTheme={toggleTheme}
+        onNewTask={() => setIsTaskModalOpen(true)}
+        onClearCompleted={handleClearCompleted}
+        theme={theme}
       />
     </div>
   );

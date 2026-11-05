@@ -1746,6 +1746,45 @@
   border-color: var(--border-medium);
 }
 
+/* Command Palette Trigger Button */
+.btn-command-palette-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  height: 30px;
+  padding: 0 0.65rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-sidebar);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--transition-fast, 120ms ease);
+  user-select: none;
+}
+
+.btn-command-palette-trigger:hover {
+  color: var(--text-primary);
+  background-color: var(--bg-surface-hover);
+  border-color: var(--border-medium);
+}
+
+.command-palette-hint-text {
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.command-palette-kbd {
+  font-size: 0.64rem;
+  font-family: 'JetBrains Mono', monospace;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  padding: 0.08rem 0.3rem;
+  border-radius: 3px;
+  color: var(--text-muted);
+}
+
 .mobile-menu-btn {
   width: 30px;
   height: 30px;
@@ -2203,6 +2242,10 @@
 }
 
 @media (max-width: 560px) {
+  .command-palette-hint-text {
+    display: none;
+  }
+
   .segment-label {
     display: none;
   }

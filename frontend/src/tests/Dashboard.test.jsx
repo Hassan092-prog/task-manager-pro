@@ -74,4 +74,23 @@ describe('Dashboard Component & PWA Offline Resilience', () => {
 
     expect(screen.queryByText(/offline \(cached\)/i)).not.toBeInTheDocument();
   });
+
+  it('opens command palette when clicking the command button or pressing Ctrl+K', async () => {
+    render(
+      <MemoryRouter initialEntries={['/app/inbox']}>
+        <Routes>
+          <Route path="/app/:section" element={<Dashboard />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(screen.queryByRole('dialog', { name: /command palette/i })).not.toBeInTheDocument();
+
+    // Trigger via hotkey
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }));
+    });
+
+    expect(await screen.findByRole('dialog', { name: /command palette/i })).toBeInTheDocument();
+  });
 });
