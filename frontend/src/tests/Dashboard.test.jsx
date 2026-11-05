@@ -93,4 +93,16 @@ describe('Dashboard Component & PWA Offline Resilience', () => {
 
     expect(await screen.findByRole('dialog', { name: /command palette/i })).toBeInTheDocument();
   });
+
+  it('renders mobile bottom navigation bar', async () => {
+    render(
+      <MemoryRouter initialEntries={['/app/inbox']}>
+        <Routes>
+          <Route path="/app/:section" element={<Dashboard />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByRole('navigation', { name: /mobile navigation/i })).toBeInTheDocument();
+  });
 });

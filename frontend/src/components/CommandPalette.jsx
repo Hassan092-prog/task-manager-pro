@@ -44,6 +44,16 @@ const CommandPalette = ({
     }
   }, [isOpen]);
 
+  // Prevent background scrolling while Command Palette is open
+  useEffect(() => {
+    if (!isOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [isOpen]);
+
   // Derive unique project categories from existing tasks
   const projectCategories = useMemo(() => {
     const categoriesSet = new Set();
@@ -145,16 +155,21 @@ const CommandPalette = ({
     }
   ], [theme, onNewTask, onToggleTheme, onToggleCompanion, onClearCompleted]);
 
-  // Convert tasks into searchable items (max 6 matches)
+  // Convert tasks into searchable items (max 6 matches, prioritizing active tasks on empty query)
   const taskSearchItems = useMemo(() => {
     const q = query.trim().toLowerCase();
     let matchedTasks = tasks;
     if (q) {
-      matchedTasks = tasks.filter(t => 
+      matchedTasks = tasks.filter(t =>
         (t.title || '').toLowerCase().includes(q) ||
         (t.description || '').toLowerCase().includes(q) ||
         (t.category || '').toLowerCase().includes(q)
       );
+    } else {
+      matchedTasks = [...tasks].sort((a, b) => {
+        if (a.completed === b.completed) return 0;
+        return a.completed ? 1 : -1;
+      });
     }
     return matchedTasks.slice(0, 6).map(t => ({
       id: `task-${t.id}`,
@@ -186,10 +201,10 @@ const CommandPalette = ({
     let actList = actionItems;
 
     if (q) {
-      navList = navigationItems.filter(item => 
+      navList = navigationItems.filter(item =>
         item.label.toLowerCase().includes(q)
       );
-      actList = actionItems.filter(item => 
+      actList = actionItems.filter(item =>
         item.label.toLowerCase().includes(q)
       );
     }
@@ -331,7 +346,7 @@ const CommandPalette = ({
                         <span className="palette-item-icon" aria-hidden="true">
                           {item.icon}
                         </span>
-                        <span className="palette-item-label">{item.label}</span>
+                        <span className={`palette-item-label ${item.completed ? 'palette-task-done' : ''}`}>{item.label}</span>
                       </div>
 
                       <div className="palette-item-right">

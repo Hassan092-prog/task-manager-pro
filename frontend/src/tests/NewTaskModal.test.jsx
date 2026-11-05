@@ -117,4 +117,32 @@ describe('NewTaskModal component', () => {
       expect(handleClose).toHaveBeenCalled();
     });
   });
+
+  describe('Mobile Bottom Sheet drag-to-dismiss', () => {
+    it('closes modal when dragged down past 75px threshold', () => {
+      const handleClose = vi.fn();
+      render(<NewTaskModal isOpen={true} onClose={handleClose} onSubmit={vi.fn()} />);
+
+      const handle = screen.getByTestId('sheet-drag-handle');
+
+      fireEvent.touchStart(handle, { touches: [{ clientY: 100 }] });
+      fireEvent.touchMove(handle, { touches: [{ clientY: 190 }] }); // deltaY = 90 (> 75)
+      fireEvent.touchEnd(handle);
+
+      expect(handleClose).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not close modal when dragged down less than 75px threshold', () => {
+      const handleClose = vi.fn();
+      render(<NewTaskModal isOpen={true} onClose={handleClose} onSubmit={vi.fn()} />);
+
+      const handle = screen.getByTestId('sheet-drag-handle');
+
+      fireEvent.touchStart(handle, { touches: [{ clientY: 100 }] });
+      fireEvent.touchMove(handle, { touches: [{ clientY: 150 }] }); // deltaY = 50 (< 75)
+      fireEvent.touchEnd(handle);
+
+      expect(handleClose).not.toHaveBeenCalled();
+    });
+  });
 });

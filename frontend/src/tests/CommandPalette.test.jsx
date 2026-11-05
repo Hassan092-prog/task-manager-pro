@@ -321,5 +321,43 @@ describe('CommandPalette component', () => {
 
     expect(screen.getByText('Switch to Dark Mode')).toBeInTheDocument();
   });
+
+  it('locks body scroll when open and restores it when unmounted', () => {
+    document.body.style.overflow = 'visible';
+    const { unmount } = render(
+      <CommandPalette
+        isOpen={true}
+        onClose={vi.fn()}
+        tasks={sampleTasks}
+        navigate={vi.fn()}
+        onToggleCompanion={vi.fn()}
+        onToggleTheme={vi.fn()}
+        onNewTask={vi.fn()}
+        onClearCompleted={vi.fn()}
+      />
+    );
+
+    expect(document.body.style.overflow).toBe('hidden');
+    unmount();
+    expect(document.body.style.overflow).toBe('visible');
+  });
+
+  it('renders completed tasks with palette-task-done style', () => {
+    render(
+      <CommandPalette
+        isOpen={true}
+        onClose={vi.fn()}
+        tasks={sampleTasks}
+        navigate={vi.fn()}
+        onToggleCompanion={vi.fn()}
+        onToggleTheme={vi.fn()}
+        onNewTask={vi.fn()}
+        onClearCompleted={vi.fn()}
+      />
+    );
+
+    const completedTaskLabel = screen.getByText('Ship V2 Release');
+    expect(completedTaskLabel).toHaveClass('palette-task-done');
+  });
 });
 

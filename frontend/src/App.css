@@ -875,19 +875,68 @@
   background-color: var(--bg-surface);
 }
 
+/* --- Task Item Container with Swipe Gestures Support --- */
+.task-item-container {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border-subtle);
+  background-color: var(--bg-surface);
+}
+
+.task-item-container:last-child {
+  border-bottom: none;
+}
+
+.task-swipe-bg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.25rem;
+  background-color: var(--bg-surface-active, rgba(255, 255, 255, 0.04));
+  z-index: 0;
+  pointer-events: none;
+}
+
+.swipe-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: -0.01em;
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 120ms ease, transform 120ms ease;
+  user-select: none;
+}
+
+.swipe-indicator.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.swipe-indicator.swipe-left {
+  color: #10b981;
+}
+
+.swipe-indicator.swipe-right {
+  color: #ef4444;
+  margin-left: auto;
+}
+
 .task-row {
   display: flex;
   align-items: center;
   gap: 0.8rem;
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid var(--border-subtle);
   background-color: var(--bg-surface);
   transition: background-color var(--transition-fast);
   position: relative;
-}
-
-.task-row:last-child {
-  border-bottom: none;
+  z-index: 1;
+  touch-action: pan-y;
 }
 
 .tasks-group-footer {
@@ -1890,6 +1939,29 @@
   animation: modalSlideUp 0.24s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Mobile Bottom Sheet Drag-to-Dismiss Handle */
+.sheet-drag-handle-area {
+  display: none;
+  width: 100%;
+  padding: 10px 0 4px 0;
+  touch-action: none;
+  cursor: grab;
+  justify-content: center;
+  align-items: center;
+}
+
+.sheet-drag-handle-pill {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background-color: var(--border-subtle);
+  transition: background-color var(--transition-fast);
+}
+
+.sheet-drag-handle-area:active .sheet-drag-handle-pill {
+  background-color: var(--text-muted);
+}
+
 @keyframes modalSlideUp {
   from {
     transform: translateY(16px) scale(0.97);
@@ -2213,7 +2285,7 @@
   }
 
   .viewport-body {
-    padding: 1rem 1rem 1.5rem 1rem;
+    padding: 1rem 1rem calc(72px + env(safe-area-inset-bottom, 0px)) 1rem;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
@@ -2238,10 +2310,14 @@
 
   .mobile-fab-btn {
     display: flex;
+    bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 16px);
   }
 }
 
 @media (max-width: 560px) {
+  .sheet-drag-handle-area {
+    display: flex;
+  }
   .command-palette-hint-text {
     display: none;
   }
@@ -2308,7 +2384,7 @@
   }
 
   .mobile-fab-btn {
-    bottom: 1.25rem;
+    bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 12px);
     right: 1.25rem;
     width: 48px;
     height: 48px;

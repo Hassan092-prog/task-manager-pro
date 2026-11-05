@@ -22,6 +22,13 @@ const TaskItem = ({ task, onUpdate, onDelete }) => {
   const [editStatus, setEditStatus] = useState(task.completed ? 'done' : (task.status || 'todo'));
   const [editDueDate, setEditDueDate] = useState(task.due_date ? task.due_date.substring(0, 16) : '');
 
+  // Touch Swipe Gesture State
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const touchStartXRef = useRef(0);
+  const touchStartYRef = useRef(0);
+  const isSwipingRef = useRef(false);
+  const axisLockedRef = useRef(null);
+
   const subtasks = Array.isArray(task.subtasks) ? task.subtasks : [];
   const completedSubtasks = subtasks.filter(s => s.completed).length;
   const totalSubtasks = subtasks.length;
@@ -120,12 +127,94 @@ const TaskItem = ({ task, onUpdate, onDelete }) => {
     return { text: dateFormatted, className: 'date-indicator' };
   };
 
+  const handleTouchStart = (e) => {
+    if (isEditing) return;
+    const touch = e.touches[0];
+    touchStartXRef.current = touch.clientX;
+    touchStartYRef.current = touch.clientY;
+    isSwipingRef.current = true;
+    axisLockedRef.current = null;
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isSwipingRef.current || isEditing) return;
+    const touch = e.touches[0];
+    const dx = touch.clientX - touchStartXRef.current;
+    const dy = touch.clientY - touchStartYRef.current;
+
+    if (axisLockedRef.current === null) {
+      if (Math.hypot(dx, dy) > 8) {
+        if (Math.abs(dy) >= Math.abs(dx)) {
+          axisLockedRef.current = 'vertical';
+          isSwipingRef.current = false;
+          setSwipeOffset(0);
+          return;
+        } else {
+          axisLockedRef.current = 'horizontal';
+        }
+      }
+    }
+
+    if (axisLockedRef.current === 'horizontal') {
+      let clamped = dx;
+      if (dx > 85) clamped = 85 + (dx - 85) * 0.25;
+      if (dx < -85) clamped = -85 + (dx + 85) * 0.25;
+      setSwipeOffset(clamped);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isSwipingRef.current || isEditing) {
+      isSwipingRef.current = false;
+      setSwipeOffset(0);
+      return;
+    }
+    isSwipingRef.current = false;
+    if (axisLockedRef.current === 'horizontal') {
+      if (swipeOffset >= 75) {
+        handleToggle();
+      } else if (swipeOffset <= -75) {
+        onDelete(task.id);
+      }
+    }
+    setSwipeOffset(0);
+    axisLockedRef.current = null;
+  };
+
+  const handleTouchCancel = () => {
+    isSwipingRef.current = false;
+    setSwipeOffset(0);
+    axisLockedRef.current = null;
+  };
+
   const due = formatDue(task.due_date, task.completed);
   const prioClass = `prio-dot-${task.priority || 'medium'}`;
 
   return (
-    <div className={`task-item-container ${task.completed ? 'is-done' : ''}`}>
-      <div className={`task-row ${task.completed ? 'is-done' : ''}`}>
+    <div 
+      className={`task-item-container ${task.completed ? 'is-done' : ''}`}
+      data-testid={`task-item-${task.id}`}
+    >
+      {/* Mobile Swipe Action Indicators Background */}
+      <div className="task-swipe-bg" aria-hidden="true">
+        <div className={`swipe-indicator swipe-left ${swipeOffset > 25 ? 'visible' : ''}`}>
+          <IconCheckCircle size={16} />
+          <span>{task.completed ? 'Pending' : 'Done'}</span>
+        </div>
+        <div className={`swipe-indicator swipe-right ${swipeOffset < -25 ? 'visible' : ''}`}>
+          <span>Delete</span>
+          <IconTrash size={16} />
+        </div>
+      </div>
+
+      <div 
+        className={`task-row ${task.completed ? 'is-done' : ''}`}
+        style={swipeOffset !== 0 ? { transform: `translateX(${swipeOffset}px)`, transition: 'none' } : undefined}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchCancel}
+      >
         <button
           type="button"
           onClick={handleToggle}

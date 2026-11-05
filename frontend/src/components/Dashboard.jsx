@@ -6,18 +6,19 @@ import TaskList from './TaskList';
 import DailyCompanion from './DailyCompanion';
 import NewTaskModal from './NewTaskModal';
 import CommandPalette from './CommandPalette';
-import { 
-  IconInbox, 
-  IconCalendar, 
-  IconCheckCircle, 
+import MobileBottomNav from './MobileBottomNav';
+import {
+  IconInbox,
+  IconCalendar,
+  IconCheckCircle,
   IconClock,
-  IconTag, 
-  IconSearch, 
-  IconPlus, 
-  IconSun, 
-  IconMoon, 
-  IconLogOut, 
-  IconMenu, 
+  IconTag,
+  IconSearch,
+  IconPlus,
+  IconSun,
+  IconMoon,
+  IconLogOut,
+  IconMenu,
   IconX,
   IconLayoutList,
   IconLayoutGrid,
@@ -31,15 +32,15 @@ const Dashboard = ({ onLogout }) => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
+
   const { section, projectTag } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  // Active Navigation View ('inbox', 'today', 'upcoming', 'completed', 'board', or tag name) derived from URL
+  // Active Navigation View ('inbox', 'today', 'upcoming', 'completed', 'board', 'stats', or tag name) derived from URL
   const activeNav = useMemo(() => {
     if (projectTag) return `tag:${projectTag}`;
-    if (section && ['inbox', 'today', 'upcoming', 'completed', 'board'].includes(section)) {
+    if (section && ['inbox', 'today', 'upcoming', 'completed', 'board', 'stats'].includes(section)) {
       return section;
     }
     return 'inbox';
@@ -182,8 +183,8 @@ const Dashboard = ({ onLogout }) => {
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (
-        profilePopoverRef.current && 
-        !profilePopoverRef.current.contains(e.target) && 
+        profilePopoverRef.current &&
+        !profilePopoverRef.current.contains(e.target) &&
         !e.target.closest('.user-profile-trigger')
       ) {
         setIsProfileOpen(false);
@@ -202,8 +203,15 @@ const Dashboard = ({ onLogout }) => {
       // Global Command Palette shortcut: Cmd+K or Ctrl+K (works from anywhere)
       if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
         e.preventDefault();
-        prevFocusRef.current = document.activeElement;
-        setIsPaletteOpen(prev => !prev);
+        if (isPaletteOpen) {
+          setIsPaletteOpen(false);
+          if (prevFocusRef.current && typeof prevFocusRef.current.focus === 'function') {
+            prevFocusRef.current.focus();
+          }
+        } else {
+          prevFocusRef.current = document.activeElement;
+          setIsPaletteOpen(true);
+        }
         return;
       }
 
@@ -470,22 +478,24 @@ const Dashboard = ({ onLogout }) => {
     if (activeNav === 'upcoming') return 'Upcoming';
     if (activeNav === 'completed') return 'Completed';
     if (activeNav === 'board') return 'Board';
+    if (activeNav === 'stats') return 'Productivity Stats';
     if (activeNav.startsWith('tag:')) return `# ${activeNav.replace('tag:', '')}`;
     return 'Tasks';
   };
 
   // Subtitle Context Info
   const getSubTitle = () => {
-    const today = new Date().toLocaleDateString(undefined, { 
-      weekday: 'long', 
-      month: 'short', 
-      day: 'numeric' 
+    const today = new Date().toLocaleDateString(undefined, {
+      weekday: 'long',
+      month: 'short',
+      day: 'numeric'
     });
     if (selectedDateFilter) {
       const parts = selectedDateFilter.split('-');
       const d = new Date(parts[0], parts[1] - 1, parts[2]);
       return `Filtered for ${d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}`;
     }
+    if (activeNav === 'stats') return 'Velocity, Streaks & Insights';
     if (activeNav === 'board') return `${filteredTasks.length} task${filteredTasks.length === 1 ? '' : 's'} across workflow columns`;
     if (activeNav === 'today') return `${today} • ${filteredTasks.length} task${filteredTasks.length === 1 ? '' : 's'} due today`;
     if (activeNav === 'completed') return `${filteredTasks.length} completed task${filteredTasks.length === 1 ? '' : 's'}`;
@@ -498,9 +508,9 @@ const Dashboard = ({ onLogout }) => {
     <div className="workspace-layout">
       {/* Mobile Backdrop */}
       {isMobileMenuOpen && (
-        <div 
-          className="sidebar-backdrop" 
-          onClick={() => setIsMobileMenuOpen(false)} 
+        <div
+          className="sidebar-backdrop"
+          onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
 
@@ -512,9 +522,9 @@ const Dashboard = ({ onLogout }) => {
             <span>Task Manager Pro</span>
           </div>
           {isMobileMenuOpen && (
-            <button 
-              type="button" 
-              onClick={() => setIsMobileMenuOpen(false)} 
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen(false)}
               className="btn-icon-subtle"
             >
               <IconX size={16} />
@@ -656,8 +666,8 @@ const Dashboard = ({ onLogout }) => {
               <div className="popover-divider" />
 
               <div className="popover-section-label">Workspace Utilities</div>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="popover-menu-item"
                 onClick={handleExportTasks}
               >
@@ -666,8 +676,8 @@ const Dashboard = ({ onLogout }) => {
               </button>
 
               {counts.completed > 0 && (
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="popover-menu-item text-danger"
                   onClick={handleClearCompleted}
                 >
@@ -700,8 +710,8 @@ const Dashboard = ({ onLogout }) => {
 
               <div className="popover-divider" />
 
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="popover-menu-item"
                 onClick={handleLogout}
               >
@@ -816,8 +826,8 @@ const Dashboard = ({ onLogout }) => {
             <div className="context-header-bar">
               <span className="context-subtitle-text">{getSubTitle()}</span>
               {selectedDateFilter && (
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => setSelectedDateFilter(null)}
                   className="btn-clear-date-tag"
                 >
@@ -829,9 +839,9 @@ const Dashboard = ({ onLogout }) => {
             {error && (
               <div className="auth-error-banner" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span>{error}</span>
-                <button 
-                  type="button" 
-                  onClick={() => setError('')} 
+                <button
+                  type="button"
+                  onClick={() => setError('')}
                   style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}
                 >
                   ✕
@@ -883,15 +893,15 @@ const Dashboard = ({ onLogout }) => {
                     </select>
 
                     <div className="date-preset-buttons">
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={setDueDateToday}
                         className="date-preset-btn"
                       >
                         Today
                       </button>
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={setDueDateTomorrow}
                         className="date-preset-btn"
                       >
@@ -930,8 +940,8 @@ const Dashboard = ({ onLogout }) => {
                   className="mobile-search-input"
                 />
                 {searchQuery && (
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={() => setSearchQuery('')}
                     className="mobile-search-clear"
                     aria-label="Clear search"
@@ -1011,10 +1021,10 @@ const Dashboard = ({ onLogout }) => {
           {/* Right Daily Companion Panel / Drawer */}
           {isCompanionVisible && (
             <>
-              <div 
-                className="companion-backdrop" 
+              <div
+                className="companion-backdrop"
                 onClick={() => setIsCompanionVisible(false)}
-                aria-hidden="true" 
+                aria-hidden="true"
               />
               <DailyCompanion
                 tasks={tasks}
@@ -1063,6 +1073,15 @@ const Dashboard = ({ onLogout }) => {
         onNewTask={() => setIsTaskModalOpen(true)}
         onClearCompleted={handleClearCompleted}
         theme={theme}
+      />
+
+      {/* Mobile Bottom Navigation Bar (<= 768px viewports) */}
+      <MobileBottomNav
+        activeNav={activeNav}
+        onNavigate={handleNavigate}
+        isCompanionVisible={isCompanionVisible}
+        onToggleCompanion={() => setIsCompanionVisible(v => !v)}
+        taskCount={counts.inbox}
       />
     </div>
   );

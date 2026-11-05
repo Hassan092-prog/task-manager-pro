@@ -18,6 +18,11 @@ const NewTaskModal = ({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  // Mobile Bottom Sheet Drag-to-Dismiss State
+  const [dragY, setDragY] = useState(0);
+  const dragStartYRef = useRef(0);
+  const isDraggingSheetRef = useRef(false);
+
   const titleInputRef = useRef(null);
 
   // Sync default category when modal opens
@@ -128,6 +133,29 @@ const NewTaskModal = ({
     }
   };
 
+  const handleTouchStart = (e) => {
+    dragStartYRef.current = e.touches[0].clientY;
+    isDraggingSheetRef.current = true;
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isDraggingSheetRef.current) return;
+    const currentY = e.touches[0].clientY;
+    const deltaY = currentY - dragStartYRef.current;
+    if (deltaY > 0) {
+      setDragY(deltaY);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDraggingSheetRef.current) return;
+    isDraggingSheetRef.current = false;
+    if (dragY > 75) {
+      onClose();
+    }
+    setDragY(0);
+  };
+
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div 
@@ -136,7 +164,21 @@ const NewTaskModal = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
+        style={dragY > 0 ? { transform: `translateY(${dragY}px)`, transition: 'none' } : undefined}
       >
+        {/* Mobile Drag-to-Dismiss Handle */}
+        <div 
+          className="sheet-drag-handle-area"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchEnd}
+          data-testid="sheet-drag-handle"
+          aria-hidden="true"
+        >
+          <div className="sheet-drag-handle-pill" />
+        </div>
+
         {/* Modal Header */}
         <div className="modal-header">
           <div className="modal-title-group">

@@ -144,6 +144,10 @@
   color: var(--text-primary);
 }
 
+.task-done-icon {
+  color: #10b981 !important;
+}
+
 .palette-item-label {
   font-size: 0.85rem;
   font-weight: 500;
@@ -151,6 +155,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--text-primary);
+}
+
+.palette-item-label.palette-task-done {
+  color: var(--text-muted);
+  text-decoration: line-through;
 }
 
 .palette-item-right {
