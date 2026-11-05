@@ -98,6 +98,8 @@ def create_task():
                         'completed': bool(s.get('completed', False))
                     })
         
+        completed_at = datetime.now(timezone.utc) if completed else None
+
         task = Task(
             title=title,
             description=data.get('description', ''),
@@ -106,6 +108,7 @@ def create_task():
             priority=priority,
             category=category,
             subtasks=clean_subtasks,
+            completed_at=completed_at,
             due_date=due_date,
             user_id=current_user_id
         )
@@ -158,6 +161,13 @@ def update_task(task_id):
                 task.status = 'done'
             elif task.status == 'done':
                 task.status = 'todo'
+
+        # Manage completed_at lifecycle
+        if task.completed:
+            if not getattr(task, 'completed_at', None):
+                task.completed_at = datetime.now(timezone.utc)
+        else:
+            task.completed_at = None
 
         if 'priority' in data:
             new_prio = (data['priority'] or '').lower()

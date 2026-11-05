@@ -105,4 +105,17 @@ describe('Dashboard Component & PWA Offline Resilience', () => {
 
     expect(await screen.findByRole('navigation', { name: /mobile navigation/i })).toBeInTheDocument();
   });
+
+  it('renders productivity stats dashboard when navigating to /app/stats', async () => {
+    render(
+      <MemoryRouter initialEntries={['/app/stats']}>
+        <Routes>
+          <Route path="/app/:section" element={<Dashboard />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByTestId('stats-dashboard')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: /productivity stats/i })).toBeInTheDocument();
+  });
 });

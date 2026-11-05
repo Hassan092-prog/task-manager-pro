@@ -39,10 +39,13 @@ def create_app():
                         conn.execute(text("ALTER TABLE task ADD COLUMN subtasks TEXT DEFAULT '[]';"))
                     if 'updated_at' not in existing_cols:
                         conn.execute(text("ALTER TABLE task ADD COLUMN updated_at DATETIME;"))
+                    if 'completed_at' not in existing_cols:
+                        conn.execute(text("ALTER TABLE task ADD COLUMN completed_at DATETIME;"))
                     conn.execute(text("UPDATE task SET status = 'done' WHERE completed = 1 AND (status IS NULL OR status = 'todo');"))
                     conn.execute(text("UPDATE task SET status = 'todo' WHERE status IS NULL;"))
                     conn.execute(text("UPDATE task SET subtasks = '[]' WHERE subtasks IS NULL;"))
                     conn.execute(text("UPDATE task SET updated_at = created_at WHERE updated_at IS NULL;"))
+                    conn.execute(text("UPDATE task SET completed_at = updated_at WHERE completed = 1 AND completed_at IS NULL;"))
                     conn.commit()
         except Exception:
             pass  # Non-SQLite or already migrated

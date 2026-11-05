@@ -1,0 +1,397 @@
+/* ==========================================================================
+   Productivity Analytics & Stats Dashboard (Phase 9)
+   Strict Swiss/Linear typography, CSS custom properties, responsive SVG curves
+   ========================================================================== */
+
+.stats-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  animation: fadeIn 0.25s ease-out;
+}
+
+/* KPI Summary Cards Grid */
+.stats-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.stats-kpi-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md, 8px);
+  padding: 1.15rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  transition: border-color var(--transition-fast, 120ms ease), box-shadow var(--transition-fast, 120ms ease);
+}
+
+.stats-kpi-card:hover {
+  border-color: var(--border-medium, rgba(255, 255, 255, 0.15));
+}
+
+.stats-kpi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stats-kpi-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stats-kpi-icon {
+  color: var(--text-muted);
+}
+
+.stats-kpi-icon.icon-emerald {
+  color: #10b981;
+}
+
+.stats-kpi-icon.icon-indigo {
+  color: #6366f1;
+}
+
+.stats-streak-flame {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.stats-kpi-value {
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
+.stats-kpi-unit {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: normal;
+}
+
+.stats-kpi-subtext {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+}
+
+.stats-kpi-pill {
+  display: inline-flex;
+  padding: 2px 7px;
+  border-radius: 12px;
+  background-color: var(--bg-hover, rgba(255, 255, 255, 0.06));
+  border: 1px solid var(--border-subtle);
+  font-size: 0.7rem;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-secondary);
+}
+
+.stats-kpi-pill.success {
+  background-color: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.25);
+  color: #10b981;
+}
+
+/* Common Section Card Style */
+.stats-section-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md, 8px);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.stats-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.stats-card-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.stats-card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.stats-card-subtitle {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.stats-chart-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--accent-solid, #6366f1);
+}
+
+/* 14-Day Velocity SVG Chart */
+.stats-svg-container {
+  position: relative;
+  width: 100%;
+  overflow: visible;
+}
+
+.velocity-svg-chart {
+  width: 100%;
+  height: auto;
+  max-height: 180px;
+  overflow: visible;
+}
+
+.chart-grid-line {
+  stroke: var(--border-subtle, rgba(255, 255, 255, 0.08));
+  stroke-width: 1;
+}
+
+.chart-grid-line.subtle {
+  stroke-dasharray: 4 4;
+  opacity: 0.5;
+}
+
+.chart-polyline {
+  stroke: var(--accent-solid, #6366f1);
+  stroke-width: 2.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chart-data-node {
+  fill: var(--bg-surface, #121316);
+  stroke: var(--accent-solid, #6366f1);
+  stroke-width: 2;
+  cursor: pointer;
+  transition: r 120ms ease, fill 120ms ease;
+  outline: none;
+}
+
+.chart-data-node.has-data {
+  fill: var(--accent-solid, #6366f1);
+}
+
+.chart-data-node.is-hovered,
+.chart-data-node:focus {
+  r: 6;
+  fill: #ffffff;
+  stroke: var(--accent-solid, #6366f1);
+  stroke-width: 3;
+}
+
+.chart-axis-label {
+  fill: var(--text-muted, #71717a);
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+}
+
+/* Interactive Hover Tooltip */
+.chart-tooltip {
+  position: absolute;
+  transform: translate(-50%, -125%);
+  background-color: var(--bg-surface-active, #1f2024);
+  border: 1px solid var(--border-medium, rgba(255, 255, 255, 0.15));
+  border-radius: var(--radius-xs, 4px);
+  padding: 6px 10px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  z-index: 10;
+  white-space: nowrap;
+  animation: fadeIn 0.12s ease-out;
+}
+
+.tooltip-date {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: 2px;
+}
+
+.tooltip-count {
+  font-size: 0.78rem;
+  color: var(--text-primary);
+}
+
+.tooltip-count strong {
+  color: var(--accent-solid, #6366f1);
+  font-weight: 700;
+}
+
+/* Category & Priority Grid */
+.stats-breakdown-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+/* Category Rows */
+.category-bars-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.category-bar-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.category-bar-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+}
+
+.category-bar-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.category-bar-counts {
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+}
+
+.category-progress-track {
+  width: 100%;
+  height: 6px;
+  background-color: var(--bg-hover, rgba(255, 255, 255, 0.06));
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.category-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1 0%, #10b981 100%);
+  border-radius: 3px;
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.category-progress-fill.prio-fill-urgent {
+  background: #ef4444;
+}
+
+.category-progress-fill.prio-fill-high {
+  background: #f59e0b;
+}
+
+.category-progress-fill.prio-fill-medium {
+  background: #3b82f6;
+}
+
+.category-progress-fill.prio-fill-low {
+  background: #10b981;
+}
+
+/* Priority Stat Tiles */
+.priority-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.priority-stat-tile {
+  background-color: var(--bg-hover, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm, 6px);
+  padding: 0.75rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.priority-tile-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.priority-tile-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.priority-tile-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.priority-tile-total {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.stats-empty-notice {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  padding: 1.5rem 0;
+  text-align: center;
+}
+
+/* Responsiveness */
+@media (max-width: 768px) {
+  .stats-breakdown-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-kpi-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .priority-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

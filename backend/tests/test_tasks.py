@@ -430,5 +430,39 @@ def test_task_payload_validation_and_edge_cases(client, register_and_login):
     put_empty = client.put(f'/api/tasks/{tid}', headers=headers, json={})
     assert put_empty.status_code == 200
 
+def test_completed_at_lifecycle_and_serialization(client, register_and_login):
+    headers = register_and_login(username='analyticsuser', email='analytics@example.com')
+
+    # 1. Task created incomplete -> completed_at is None
+    res = client.post('/api/tasks', headers=headers, json={'title': 'Track Analytics'})
+    assert res.status_code == 201
+    task = res.get_json()['task']
+    tid = task['id']
+    assert task['completed'] is False
+    assert task['completed_at'] is None
+
+    # 2. Mark completed -> completed_at is set to ISO string
+    up_res = client.put(f'/api/tasks/{tid}', headers=headers, json={'completed': True})
+    assert up_res.status_code == 200
+    up_task = up_res.get_json()['task']
+    assert up_task['completed'] is True
+    assert up_task['completed_at'] is not None
+    assert 'T' in up_task['completed_at']
+
+    # 3. Mark incomplete -> completed_at is cleared to None
+    down_res = client.put(f'/api/tasks/{tid}', headers=headers, json={'completed': False})
+    assert down_res.status_code == 200
+    down_task = down_res.get_json()['task']
+    assert down_task['completed'] is False
+    assert down_task['completed_at'] is None
+
+    # 4. Create directly with status done -> completed_at is set immediately
+    done_res = client.post('/api/tasks', headers=headers, json={'title': 'Instant Done', 'status': 'done'})
+    assert done_res.status_code == 201
+    done_task = done_res.get_json()['task']
+    assert done_task['completed'] is True
+    assert done_task['completed_at'] is not None
+
+
 
 

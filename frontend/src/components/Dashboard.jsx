@@ -7,11 +7,13 @@ import DailyCompanion from './DailyCompanion';
 import NewTaskModal from './NewTaskModal';
 import CommandPalette from './CommandPalette';
 import MobileBottomNav from './MobileBottomNav';
+import StatsDashboard from './StatsDashboard';
 import {
   IconInbox,
   IconCalendar,
   IconCheckCircle,
   IconClock,
+  IconBarChart,
   IconTag,
   IconSearch,
   IconPlus,
@@ -594,6 +596,17 @@ const Dashboard = ({ onLogout }) => {
               </span>
               <span className="nav-count">{counts.completed}</span>
             </button>
+
+            <button
+              type="button"
+              className={`nav-item ${activeNav === 'stats' ? 'active' : ''}`}
+              onClick={() => handleNavigate('stats')}
+            >
+              <span className="nav-item-left">
+                <IconBarChart size={15} />
+                Stats
+              </span>
+            </button>
           </div>
 
           <div className="sidebar-section">
@@ -850,160 +863,168 @@ const Dashboard = ({ onLogout }) => {
             )}
 
             {/* Frictionless Inline Quick-Add Task Input (Desktop Only) */}
-            <form onSubmit={handleQuickCreate} className="quick-add-container desktop-only-quick-add">
-              <div className="quick-add-main-row">
-                <IconPlus size={16} />
-                <input
-                  ref={quickInputRef}
-                  type="text"
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="Add a new task... (Press Enter to save)"
-                  className="quick-add-input"
-                />
-              </div>
+            {activeNav !== 'stats' && (
+              <form onSubmit={handleQuickCreate} className="quick-add-container desktop-only-quick-add">
+                <div className="quick-add-main-row">
+                  <IconPlus size={16} />
+                  <input
+                    ref={quickInputRef}
+                    type="text"
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    placeholder="Add a new task... (Press Enter to save)"
+                    className="quick-add-input"
+                  />
+                </div>
 
-              {newTitle.trim() && (
-                <div className="quick-add-options-row">
-                  <div className="quick-selectors">
-                    <div className="selector-chip-wrapper">
-                      <span className={`prio-dot-indicator prio-dot-${newPriority}`} />
+                {newTitle.trim() && (
+                  <div className="quick-add-options-row">
+                    <div className="quick-selectors">
+                      <div className="selector-chip-wrapper">
+                        <span className={`prio-dot-indicator prio-dot-${newPriority}`} />
+                        <select
+                          value={newPriority}
+                          onChange={(e) => setNewPriority(e.target.value)}
+                          className="selector-select"
+                        >
+                          <option value="urgent">Urgent</option>
+                          <option value="high">High</option>
+                          <option value="medium">Medium</option>
+                          <option value="low">Low</option>
+                        </select>
+                      </div>
+
                       <select
-                        value={newPriority}
-                        onChange={(e) => setNewPriority(e.target.value)}
+                        value={newCategory}
+                        onChange={(e) => setNewCategory(e.target.value)}
                         className="selector-select"
                       >
-                        <option value="urgent">Urgent</option>
-                        <option value="high">High</option>
-                        <option value="medium">Medium</option>
-                        <option value="low">Low</option>
+                        <option value="Work">Work</option>
+                        <option value="Personal">Personal</option>
+                        <option value="Engineering">Engineering</option>
+                        <option value="Design">Design</option>
+                        <option value="General">General</option>
                       </select>
+
+                      <div className="date-preset-buttons">
+                        <button
+                          type="button"
+                          onClick={setDueDateToday}
+                          className="date-preset-btn"
+                        >
+                          Today
+                        </button>
+                        <button
+                          type="button"
+                          onClick={setDueDateTomorrow}
+                          className="date-preset-btn"
+                        >
+                          Tomorrow
+                        </button>
+                        <input
+                          type="datetime-local"
+                          value={newDueDate}
+                          onChange={(e) => setNewDueDate(e.target.value)}
+                          className="selector-date"
+                          title="Set Due Date"
+                        />
+                      </div>
                     </div>
 
-                    <select
-                      value={newCategory}
-                      onChange={(e) => setNewCategory(e.target.value)}
-                      className="selector-select"
+                    <button
+                      type="submit"
+                      disabled={isCreating}
+                      className="btn-submit-quick"
                     >
-                      <option value="Work">Work</option>
-                      <option value="Personal">Personal</option>
-                      <option value="Engineering">Engineering</option>
-                      <option value="Design">Design</option>
-                      <option value="General">General</option>
-                    </select>
-
-                    <div className="date-preset-buttons">
-                      <button
-                        type="button"
-                        onClick={setDueDateToday}
-                        className="date-preset-btn"
-                      >
-                        Today
-                      </button>
-                      <button
-                        type="button"
-                        onClick={setDueDateTomorrow}
-                        className="date-preset-btn"
-                      >
-                        Tomorrow
-                      </button>
-                      <input
-                        type="datetime-local"
-                        value={newDueDate}
-                        onChange={(e) => setNewDueDate(e.target.value)}
-                        className="selector-date"
-                        title="Set Due Date"
-                      />
-                    </div>
+                      {isCreating ? 'Adding...' : 'Add ↵'}
+                    </button>
                   </div>
-
-                  <button
-                    type="submit"
-                    disabled={isCreating}
-                    className="btn-submit-quick"
-                  >
-                    {isCreating ? 'Adding...' : 'Add ↵'}
-                  </button>
-                </div>
-              )}
-            </form>
+                )}
+              </form>
+            )}
 
             {/* Mobile Navigation & Full-Width Search Bar (Replaces top add bar on small screens) */}
-            <div className="mobile-search-nav-container">
-              <div className="mobile-search-bar">
-                <IconSearch size={15} className="mobile-search-icon" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search tasks..."
-                  className="mobile-search-input"
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery('')}
-                    className="mobile-search-clear"
-                    aria-label="Clear search"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
+            {activeNav !== 'stats' && (
+              <div className="mobile-search-nav-container">
+                <div className="mobile-search-bar">
+                  <IconSearch size={15} className="mobile-search-icon" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search tasks..."
+                    className="mobile-search-input"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      className="mobile-search-clear"
+                      aria-label="Clear search"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
 
-              {/* Horizontal Scrollable View & Project Switcher */}
-              <div className="mobile-nav-chips-bar">
+                {/* Horizontal Scrollable View & Project Switcher */}
+                <div className="mobile-nav-chips-bar">
+                  {[
+                    { id: 'inbox', label: 'Inbox', count: counts.inbox, icon: <IconInbox size={12} /> },
+                    { id: 'today', label: 'Today', count: counts.today, icon: <IconCalendar size={12} /> },
+                    { id: 'upcoming', label: 'Upcoming', count: counts.upcoming, icon: <IconClock size={12} /> },
+                    { id: 'completed', label: 'Done', count: counts.completed, icon: <IconCheckCircle size={12} /> },
+                    { id: 'tag:Work', label: 'Work', dot: '#3b82f6' },
+                    { id: 'tag:Personal', label: 'Personal', dot: '#10b981' },
+                    { id: 'tag:Engineering', label: 'Engineering', dot: '#8b5cf6' },
+                    { id: 'tag:Design', label: 'Design', dot: '#f59e0b' }
+                  ].map(nav => (
+                    <button
+                      key={nav.id}
+                      type="button"
+                      className={`mobile-nav-chip ${activeNav === nav.id ? 'active' : ''}`}
+                      onClick={() => handleNavigate(nav.id)}
+                    >
+                      {nav.icon && <span className="mobile-nav-chip-icon">{nav.icon}</span>}
+                      {nav.dot && <span className="tag-dot" style={{ backgroundColor: nav.dot }} />}
+                      <span>{nav.label}</span>
+                      {typeof nav.count === 'number' && (
+                        <span className="mobile-nav-chip-count">{nav.count}</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Quick Filter Strip (1-Click Slicing) */}
+            {activeNav !== 'stats' && (
+              <div className="quick-filter-strip">
                 {[
-                  { id: 'inbox', label: 'Inbox', count: counts.inbox, icon: <IconInbox size={12} /> },
-                  { id: 'today', label: 'Today', count: counts.today, icon: <IconCalendar size={12} /> },
-                  { id: 'upcoming', label: 'Upcoming', count: counts.upcoming, icon: <IconClock size={12} /> },
-                  { id: 'completed', label: 'Done', count: counts.completed, icon: <IconCheckCircle size={12} /> },
-                  { id: 'tag:Work', label: 'Work', dot: '#3b82f6' },
-                  { id: 'tag:Personal', label: 'Personal', dot: '#10b981' },
-                  { id: 'tag:Engineering', label: 'Engineering', dot: '#8b5cf6' },
-                  { id: 'tag:Design', label: 'Design', dot: '#f59e0b' }
-                ].map(nav => (
+                  { id: 'all', label: 'All' },
+                  { id: 'urgent', label: '🔴 Urgent' },
+                  { id: 'high', label: '🟠 High' },
+                  { id: 'Work', label: 'Work' },
+                  { id: 'Personal', label: 'Personal' },
+                  { id: 'Engineering', label: 'Engineering' },
+                  { id: 'Design', label: 'Design' }
+                ].map(pill => (
                   <button
-                    key={nav.id}
+                    key={pill.id}
                     type="button"
-                    className={`mobile-nav-chip ${activeNav === nav.id ? 'active' : ''}`}
-                    onClick={() => handleNavigate(nav.id)}
+                    className={`filter-pill-btn ${activeFilterPill === pill.id ? 'active' : ''}`}
+                    onClick={() => setActiveFilterPill(activeFilterPill === pill.id ? 'all' : pill.id)}
                   >
-                    {nav.icon && <span className="mobile-nav-chip-icon">{nav.icon}</span>}
-                    {nav.dot && <span className="tag-dot" style={{ backgroundColor: nav.dot }} />}
-                    <span>{nav.label}</span>
-                    {typeof nav.count === 'number' && (
-                      <span className="mobile-nav-chip-count">{nav.count}</span>
-                    )}
+                    {pill.label}
                   </button>
                 ))}
               </div>
-            </div>
+            )}
 
-            {/* Quick Filter Strip (1-Click Slicing) */}
-            <div className="quick-filter-strip">
-              {[
-                { id: 'all', label: 'All' },
-                { id: 'urgent', label: '🔴 Urgent' },
-                { id: 'high', label: '🟠 High' },
-                { id: 'Work', label: 'Work' },
-                { id: 'Personal', label: 'Personal' },
-                { id: 'Engineering', label: 'Engineering' },
-                { id: 'Design', label: 'Design' }
-              ].map(pill => (
-                <button
-                  key={pill.id}
-                  type="button"
-                  className={`filter-pill-btn ${activeFilterPill === pill.id ? 'active' : ''}`}
-                  onClick={() => setActiveFilterPill(activeFilterPill === pill.id ? 'all' : pill.id)}
-                >
-                  {pill.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Task Stream Collection */}
-            {loading && tasks.length === 0 ? (
+            {/* Task Stream Collection or Productivity Stats */}
+            {activeNav === 'stats' ? (
+              <StatsDashboard tasks={tasks} />
+            ) : loading && tasks.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                 Loading workspace...
               </div>
