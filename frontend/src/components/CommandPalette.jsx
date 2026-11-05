@@ -6,6 +6,7 @@ import {
   IconClock,
   IconCheckCircle,
   IconLayoutGrid,
+  IconBarChart,
   IconTag,
   IconPlus,
   IconSun,
@@ -108,6 +109,14 @@ const CommandPalette = ({
         icon: <IconLayoutGrid size={15} />,
         shortcut: 'G B',
         perform: () => navigate('board')
+      },
+      {
+        id: 'nav-stats',
+        label: 'Go to Productivity Stats',
+        section: 'Navigation',
+        icon: <IconBarChart size={15} />,
+        shortcut: 'G S',
+        perform: () => navigate('stats')
       }
     ];
 

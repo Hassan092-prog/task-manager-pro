@@ -195,26 +195,27 @@ const TaskItem = ({ task, onUpdate, onDelete }) => {
       className={`task-item-container ${task.completed ? 'is-done' : ''}`}
       data-testid={`task-item-${task.id}`}
     >
-      {/* Mobile Swipe Action Indicators Background */}
-      <div className="task-swipe-bg" aria-hidden="true">
-        <div className={`swipe-indicator swipe-left ${swipeOffset > 25 ? 'visible' : ''}`}>
-          <IconCheckCircle size={16} />
-          <span>{task.completed ? 'Pending' : 'Done'}</span>
+      <div className="task-row-wrapper">
+        {/* Mobile Swipe Action Indicators Background */}
+        <div className="task-swipe-bg" aria-hidden="true">
+          <div className={`swipe-indicator swipe-left ${swipeOffset > 25 ? 'visible' : ''}`}>
+            <IconCheckCircle size={16} />
+            <span>{task.completed ? 'Pending' : 'Done'}</span>
+          </div>
+          <div className={`swipe-indicator swipe-right ${swipeOffset < -25 ? 'visible' : ''}`}>
+            <span>Delete</span>
+            <IconTrash size={16} />
+          </div>
         </div>
-        <div className={`swipe-indicator swipe-right ${swipeOffset < -25 ? 'visible' : ''}`}>
-          <span>Delete</span>
-          <IconTrash size={16} />
-        </div>
-      </div>
 
-      <div 
-        className={`task-row ${task.completed ? 'is-done' : ''}`}
-        style={swipeOffset !== 0 ? { transform: `translateX(${swipeOffset}px)`, transition: 'none' } : undefined}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        onTouchCancel={handleTouchCancel}
-      >
+        <div 
+          className={`task-row ${task.completed ? 'is-done' : ''}`}
+          style={swipeOffset !== 0 ? { transform: `translateX(${swipeOffset}px)`, transition: 'none' } : undefined}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchCancel}
+        >
         <button
           type="button"
           onClick={handleToggle}
@@ -361,6 +362,7 @@ const TaskItem = ({ task, onUpdate, onDelete }) => {
             </div>
           </form>
         )}
+      </div>
       </div>
 
       {isExpanded && !isEditing && (

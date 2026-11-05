@@ -92,6 +92,7 @@ describe('CommandPalette component', () => {
     expect(screen.getByText('Go to Upcoming')).toBeInTheDocument();
     expect(screen.getByText('Go to Completed')).toBeInTheDocument();
     expect(screen.getByText('Go to Kanban Board')).toBeInTheDocument();
+    expect(screen.getByText('Go to Productivity Stats')).toBeInTheDocument();
 
     // Dynamic project tags from tasks
     expect(screen.getByText('Project: Engineering')).toBeInTheDocument();
